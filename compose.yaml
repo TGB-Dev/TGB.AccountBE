@@ -1,0 +1,6 @@
+﻿services:
+  tgb.accountbe.api:
+    image: tgb.accountbe.api
+    build:
+      context: .
+      dockerfile: TGB.AccountBE.API/Dockerfile
