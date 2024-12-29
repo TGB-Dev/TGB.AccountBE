@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using TGB.AccountBE.API.Constants;
 
 namespace TGB.AccountBE.API.Database;
 
@@ -7,24 +8,15 @@ public class ApplicationDbInitializer
 {
     private static void RolesSeed(DbContext context)
     {
-        var roles = new List<IdentityRole>
+        var roles = new List<IdentityRole>();
+        Enum.GetValues<Roles>().ToList().ForEach(role =>
         {
-            new()
+            roles.Add(new IdentityRole
             {
-                Name = "Admin",
-                NormalizedName = "ADMIN"
-            },
-            new()
-            {
-                Name = "Moderator",
-                NormalizedName = "MODERATOR"
-            },
-            new()
-            {
-                Name = "User",
-                NormalizedName = "USER"
-            }
-        };
+                Name = role.ToString(),
+                NormalizedName = role.ToString().ToUpper()
+            });
+        });
 
         roles.ForEach(role =>
         {
