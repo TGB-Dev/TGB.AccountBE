@@ -1,6 +1,5 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using TGB.AccountBE.API.Database;
@@ -22,7 +21,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     );
 });
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
     {
         // Password settings
         options.Password.RequireDigit = true;
