@@ -1,8 +1,11 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using TGB.AccountBE.API.Database;
+using TGB.AccountBE.API.Interfaces;
+using TGB.AccountBE.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,8 +19,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        o => o.UseNodaTime()
+        builder.Configuration.GetConnectionString("DefaultConnection")
     );
 });
 
@@ -30,7 +32,8 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
         // User settings
         options.User.RequireUniqueEmail = true;
     })
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
 
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(options =>
@@ -54,6 +57,8 @@ builder.Services.AddAuthentication(options =>
                     Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SigningKey"]))
         };
     });
+
+builder.Services.AddScoped<IJwtService, JwtService>();
 
 var app = builder.Build();
 

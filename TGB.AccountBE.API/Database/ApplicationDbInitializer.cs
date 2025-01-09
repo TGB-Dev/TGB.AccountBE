@@ -3,7 +3,7 @@ using TGB.AccountBE.API.Constants;
 
 namespace TGB.AccountBE.API.Database;
 
-public class ApplicationDbInitializer
+public static class ApplicationDbInitializer
 {
     private static void RolesSeed(DbContext context)
     {

@@ -483,5 +483,5 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 
-# Database migration files
-TGB.AccountBE.API/Migrations
+# SQL Migrations
+[Mm]igrations/
