@@ -1,8 +1,8 @@
 ﻿namespace TGB.AccountBE.API.Constants;
 
-public enum Roles
+public static class Roles
 {
-    Admin = 1,
-    Moderator = 2,
-    User = 3
+    public const string Admin = "Admin";
+    public const string Moderator = "Moderator";
+    public const string User = "User";
 }
