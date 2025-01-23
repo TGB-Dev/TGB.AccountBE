@@ -25,6 +25,7 @@
         <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.10.0"/>
         <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.10.0"/>
         <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.10.0"/>
+        <PackageReference Include="Redis.OM" Version="0.7.6"/>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
     </ItemGroup>
 
@@ -32,10 +33,6 @@
         <Content Include="..\.dockerignore">
             <Link>.dockerignore</Link>
         </Content>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Dtos\Auth\" />
     </ItemGroup>
 
 </Project>

@@ -2,8 +2,8 @@
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using TGB.AccountBE.API.Database;
-using TGB.AccountBE.API.Interfaces;
+using TGB.AccountBE.API.Interfaces.Services;
+using TGB.AccountBE.API.Models.Sql;
 
 namespace TGB.AccountBE.API.Services;
 
@@ -16,18 +16,19 @@ public class JwtService : IJwtService
         _configuration = configuration;
     }
 
-    public string GenerateJwtToken(ApplicationUser user)
+    public string GenerateAccessToken(ApplicationUser user)
     {
         var securityKey =
-            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:SigningKey"]));
+            new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(_configuration["Token:AccessToken:SigningKey"]));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = GetClaimsIdentity(user),
             Expires = DateTime.UtcNow.AddMinutes(
-                double.Parse(_configuration["Jwt:ExpirationInMinutes"])),
-            Issuer = _configuration["Jwt:Issuer"],
-            Audience = _configuration["Jwt:Audience"],
+                double.Parse(_configuration["Token:AccessToken:ExpiresInMinutes"])),
+            Issuer = _configuration["Token:AccessToken:Issuer"],
+            Audience = _configuration["Token:AccessToken:Audience"],
             SigningCredentials = credentials
         };
         var tokenHandler = new JwtSecurityTokenHandler();
@@ -39,9 +40,10 @@ public class JwtService : IJwtService
     {
         var claims = new List<Claim>
         {
-            new(ClaimTypes.Name, user.UserName),
-            new(ClaimTypes.Email, user.Email),
-            new(ClaimTypes.NameIdentifier, user.Id)
+            new(JwtRegisteredClaimNames.Sub, user.Id),
+            new(JwtRegisteredClaimNames.UniqueName, user.UserName),
+            new(JwtRegisteredClaimNames.Name, user.DisplayName),
+            new(JwtRegisteredClaimNames.Email, user.Email)
         };
         return new ClaimsIdentity(claims);
     }

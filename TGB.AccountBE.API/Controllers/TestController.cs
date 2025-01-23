@@ -3,7 +3,7 @@
 namespace TGB.AccountBE.API.Controllers;
 
 [ApiController]
-[Route("api/test")]
+[Route("api/[controller]")]
 public class TestController : ControllerBase
 {
     [HttpGet]

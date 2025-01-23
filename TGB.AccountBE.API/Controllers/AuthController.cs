@@ -1,7 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using TGB.AccountBE.API.Database;
-using TGB.AccountBE.API.Interfaces;
+﻿using Microsoft.AspNetCore.Mvc;
+using TGB.AccountBE.API.Dtos.Auth;
+using TGB.AccountBE.API.Interfaces.Services;
 
 namespace TGB.AccountBE.API.Controllers;
 
@@ -9,15 +8,32 @@ namespace TGB.AccountBE.API.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly IJwtService _jwtService;
-    private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IAuthService _authService;
 
-    public AuthController(UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager, IJwtService jwtService)
+    public AuthController(IAuthService authService)
     {
-        _userManager = userManager;
-        _signInManager = signInManager;
-        _jwtService = jwtService;
+        _authService = authService;
+    }
+
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterReqDto body)
+    {
+        var res = await _authService.Register(body);
+        return Ok(res);
+    }
+
+    [HttpPost("login")]
+    public async Task<ActionResult<LoginResDto>> Login([FromBody] LoginReqDto body)
+    {
+        var res = await _authService.Login(body);
+        return Ok(res);
+    }
+
+    [HttpPost("refreshToken")]
+    public async Task<ActionResult<RefreshTokenResDto>> RefreshToken(
+        [FromBody] RefreshTokenReqDto body)
+    {
+        var res = await _authService.RefreshToken(body);
+        return Ok(res);
     }
 }
