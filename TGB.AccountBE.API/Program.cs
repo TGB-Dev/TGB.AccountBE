@@ -3,43 +3,135 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Redis.OM;
 using Quartz;
 using TGB.AccountBE.API.Database;
+using TGB.AccountBE.API.Exceptions;
+using TGB.AccountBE.API.Interfaces.Repository.RedisOm;
+using TGB.AccountBE.API.Interfaces.Repository.Sql;
+using TGB.AccountBE.API.Interfaces.Services;
+using TGB.AccountBE.API.Models.Sql;
+using TGB.AccountBE.API.Repository.RedisOm;
+using TGB.AccountBE.API.Repository.Sql;
+using TGB.AccountBE.API.Services;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Add controllers and generate Swagger/OpenAPI documentation
+// Learn more at https://aka.ms/aspnetcore/swashbuckle
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddControllers();
+builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description =
+            "JWT Authorization header using the Bearer scheme (Example: 'Bearer 12345abcdef')",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
+// Add database context
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-        // Don't know if we should keep this because the identity entities are managed by OpenIddict
-        // and ASP.NET Core Identity, not us
-        // o => o.UseNodaTime()
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        o => o.UseNodaTime()
     );
 
     // Use OpenIddict entities
     options.UseOpenIddict();
 });
 
-builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+// Add Redis Om services
+builder.Services.AddHostedService<IndexCreationService>();
+builder.Services.AddSingleton(
+    new RedisConnectionProvider(
+        builder.Configuration.GetConnectionString("RedisConnection") ?? ""));
+
+// Add Redis repositories
+builder.Services
+    .AddScoped<IUserSessionRepositoryRedisOm,
+        UserSessionRepositoryRedisOm>();
+
+// Add Sql repositories
+builder.Services
+    .AddScoped<IUserSessionRepositorySql,
+        UserSessionRepositorySql>();
+
+// Identity
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
         // Password settings
         options.Password.RequireDigit = true;
         options.Password.RequiredLength = 8;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireLowercase = false;
+        options.Password.RequireNonAlphanumeric = false;
 
         // User settings
         options.User.RequireUniqueEmail = true;
+        options.User.AllowedUserNameCharacters =
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+        // Signin settings
+        options.SignIn.RequireConfirmedEmail = true;
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
+
+// Authentication and Authorization with other middlewares
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme =
+            JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultForbidScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultSignOutScheme =
+            JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Token:AccessToken:Issuer"],
+            ValidAudience = builder.Configuration["Token:AccessToken:Audience"],
+            IssuerSigningKey =
+                new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(builder.Configuration["Token:AccessToken:SigningKey"]))
+        };
+    });
 
 builder.Services.AddAuthorization();
 
@@ -137,11 +229,29 @@ builder.Services.AddOpenIddict()
         // Register the ASP.NET Core host.
         options.UseAspNetCore();
     });
-;
 
-var app = builder.Build();
+builder.Services.AddAuthorization();
+
+// Add controllers' services
+builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUserSessionService, UserSessionService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+// Add problem details
+builder.Services.AddProblemDetails();
+
+// Add exception handler
+builder.Services.AddExceptionHandler<AppExceptionHandler>();
 
 // Configure the HTTP request pipeline.
+var app = builder.Build();
+
+await ApplicationDbInitializer.SeedAsync(app.Services);
+
+app.UseExceptionHandler();
+app.UseStatusCodePages();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
