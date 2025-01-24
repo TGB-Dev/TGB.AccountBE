@@ -60,7 +60,7 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
+        builder.Configuration.GetConnectionString("SqlConnection") ?? "",
         o => o.UseNodaTime()
     );
 
@@ -169,27 +169,27 @@ builder.Services.AddOpenIddict()
         options.UseSystemNetHttp()
             .SetProductInformation(typeof(Program).Assembly);
 
-        options.UseWebProviders()
-            .AddGoogle(options =>
-            {
-                var googleConfig = builder.Configuration
-                    .GetRequiredSection("External")
-                    .GetRequiredSection("Google");
-                options
-                    .SetClientId(googleConfig.GetValue<string>("ClientId") ?? string.Empty)
-                    .SetClientSecret(googleConfig.GetValue<string>("ClientSecret") ?? string.Empty)
-                    .SetRedirectUri(googleConfig.GetValue<string>("RedirectUri") ?? string.Empty);
-            })
-            .AddGitHub(options =>
-            {
-                var githubConfig = builder.Configuration
-                    .GetRequiredSection("External")
-                    .GetRequiredSection("GitHub");
-                options
-                    .SetClientId(githubConfig.GetValue<string>("ClientId") ?? string.Empty)
-                    .SetClientSecret(githubConfig.GetValue<string>("ClientSecret") ?? string.Empty)
-                    .SetRedirectUri(githubConfig.GetValue<string>("RedirectUri") ?? string.Empty);
-            });
+        // options.UseWebProviders()
+        //     .AddGoogle(options =>
+        //     {
+        //         var googleConfig = builder.Configuration
+        //             .GetRequiredSection("External")
+        //             .GetRequiredSection("Google");
+        //         options
+        //             .SetClientId(googleConfig.GetValue<string>("ClientId") ?? string.Empty)
+        //             .SetClientSecret(googleConfig.GetValue<string>("ClientSecret") ?? string.Empty)
+        //             .SetRedirectUri(googleConfig.GetValue<string>("RedirectUri") ?? string.Empty);
+        //     })
+        //     .AddGitHub(options =>
+        //     {
+        //         var githubConfig = builder.Configuration
+        //             .GetRequiredSection("External")
+        //             .GetRequiredSection("GitHub");
+        //         options
+        //             .SetClientId(githubConfig.GetValue<string>("ClientId") ?? string.Empty)
+        //             .SetClientSecret(githubConfig.GetValue<string>("ClientSecret") ?? string.Empty)
+        //             .SetRedirectUri(githubConfig.GetValue<string>("RedirectUri") ?? string.Empty);
+        //     });
     })
     .AddServer(options =>
     {
