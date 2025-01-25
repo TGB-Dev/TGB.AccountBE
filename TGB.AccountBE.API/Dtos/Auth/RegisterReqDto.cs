@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using TGB.AccountBE.API.Constants;
 
 namespace TGB.AccountBE.API.Dtos.Auth;
 
@@ -9,14 +10,14 @@ public class RegisterReqDto
     [Required]
     [MinLength(6)]
     [MaxLength(32)]
-    [RegularExpression(@"^[a-zA-Z0-9]+$",
-        ErrorMessage = "UserName must contain only letters and numbers")]
+    [RegularExpression(UserInfoRules.USERNAME_PATTERN,
+        ErrorMessage = UserInfoRules.USERNAME_ERROR_MESSAGE)]
     public required string UserName { get; set; }
 
     [Required]
     [MinLength(8)]
-    [RegularExpression(@"^(?=.*[A-Za-z])(?=.*\d).+$",
-        ErrorMessage = "Password must contain at least one letter and one number")]
+    [RegularExpression(UserInfoRules.PASSWORD_PATTERN,
+        ErrorMessage = UserInfoRules.PASSWORD_ERROR_MESSAGE)]
     public required string Password { get; set; }
 
     [Required] [EmailAddress] public required string Email { get; set; }

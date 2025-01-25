@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Redis.OM;
 using Quartz;
+using Redis.OM;
 using TGB.AccountBE.API.Database;
 using TGB.AccountBE.API.Exceptions;
 using TGB.AccountBE.API.Interfaces.Repository.RedisOm;
@@ -18,43 +18,6 @@ using TGB.AccountBE.API.Services;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add controllers and generate Swagger/OpenAPI documentation
-// Learn more at https://aka.ms/aspnetcore/swashbuckle
-
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddControllers();
-builder.Services.AddSwaggerGen();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Description =
-            "JWT Authorization header using the Bearer scheme (Example: 'Bearer 12345abcdef')",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.Http,
-        Scheme = "Bearer",
-        BearerFormat = "JWT"
-    });
-
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
-});
-
-builder.Services.AddControllers();
 
 // Add database context
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -108,13 +71,13 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 // Authentication and Authorization with other middlewares
 builder.Services.AddAuthentication(options =>
     {
-        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultScheme = IdentityConstants.ApplicationScheme;
+        options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+        options.DefaultForbidScheme = IdentityConstants.ApplicationScheme;
+        options.DefaultSignOutScheme =
+            IdentityConstants.ApplicationScheme;
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
         options.DefaultChallengeScheme =
-            JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultForbidScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultSignOutScheme =
             JwtBearerDefaults.AuthenticationScheme;
     })
     .AddJwtBearer(options =>
@@ -129,11 +92,22 @@ builder.Services.AddAuthentication(options =>
             ValidAudience = builder.Configuration["Token:AccessToken:Audience"],
             IssuerSigningKey =
                 new SymmetricSecurityKey(
-                    Encoding.UTF8.GetBytes(builder.Configuration["Token:AccessToken:SigningKey"]))
+                    Encoding.UTF8.GetBytes(builder.Configuration["Token:AccessToken:SigningKey"]!))
         };
     });
 
-builder.Services.AddAuthorization();
+// Add controllers' services
+builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUserSessionService, UserSessionService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IOidcAuthService, OidcAuthService>();
+
+// Add problem details
+builder.Services.AddProblemDetails();
+
+// Add exception handler
+builder.Services.AddExceptionHandler<AppExceptionHandler>();
 
 // OpenIddict offers native integration with Quartz.NET to perform scheduled tasks
 // (like pruning orphaned authorizations/tokens from the database) at regular intervals.
@@ -146,6 +120,7 @@ builder.Services.AddQuartz(options =>
 // Register the Quartz.NET service and configure it to block shutdown until jobs are complete.
 builder.Services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
 
+// We're using OpenIddict with the authorization code flow + PKCE
 builder.Services.AddOpenIddict()
     .AddCore(options =>
     {
@@ -155,49 +130,13 @@ builder.Services.AddOpenIddict()
         // Use Quartz
         options.UseQuartz();
     })
-    .AddClient(options =>
-    {
-        options.AllowAuthorizationCodeFlow();
-
-        options.AddDevelopmentEncryptionCertificate()
-            .AddDevelopmentSigningCertificate();
-
-        options.UseAspNetCore()
-            .EnableStatusCodePagesIntegration()
-            .EnableRedirectionEndpointPassthrough();
-
-        options.UseSystemNetHttp()
-            .SetProductInformation(typeof(Program).Assembly);
-
-        // options.UseWebProviders()
-        //     .AddGoogle(options =>
-        //     {
-        //         var googleConfig = builder.Configuration
-        //             .GetRequiredSection("External")
-        //             .GetRequiredSection("Google");
-        //         options
-        //             .SetClientId(googleConfig.GetValue<string>("ClientId") ?? string.Empty)
-        //             .SetClientSecret(googleConfig.GetValue<string>("ClientSecret") ?? string.Empty)
-        //             .SetRedirectUri(googleConfig.GetValue<string>("RedirectUri") ?? string.Empty);
-        //     })
-        //     .AddGitHub(options =>
-        //     {
-        //         var githubConfig = builder.Configuration
-        //             .GetRequiredSection("External")
-        //             .GetRequiredSection("GitHub");
-        //         options
-        //             .SetClientId(githubConfig.GetValue<string>("ClientId") ?? string.Empty)
-        //             .SetClientSecret(githubConfig.GetValue<string>("ClientSecret") ?? string.Empty)
-        //             .SetRedirectUri(githubConfig.GetValue<string>("RedirectUri") ?? string.Empty);
-        //     });
-    })
     .AddServer(options =>
     {
         // Enable the authorization, logout, token and userinfo endpoints.
-        options.SetAuthorizationEndpointUris("connect/authorize")
-            .SetEndSessionEndpointUris("connect/logout")
-            .SetTokenEndpointUris("connect/token")
-            .SetUserInfoEndpointUris("connect/userinfo");
+        options.SetAuthorizationEndpointUris("/api/Oidc/Authorize")
+            .SetEndSessionEndpointUris("/api/Oidc/Logout")
+            .SetTokenEndpointUris("/api/Oidc/Token")
+            .SetUserInfoEndpointUris("/api/Oidc/UserInfo");
 
         options.RegisterScopes(
             Scopes.Email,
@@ -207,7 +146,7 @@ builder.Services.AddOpenIddict()
         );
 
         // Enable the authorization code flow.
-        options.AllowAuthorizationCodeFlow();
+        options.AllowAuthorizationCodeFlow().RequireProofKeyForCodeExchange();
 
         // Register the signing and encryption credentials.
         options.AddDevelopmentEncryptionCertificate()
@@ -221,6 +160,53 @@ builder.Services.AddOpenIddict()
             .EnableUserInfoEndpointPassthrough()
             .EnableStatusCodePagesIntegration();
     })
+    .AddClient(options =>
+    {
+        options.SetRedirectionEndpointUris("api/Auth/Login");
+        options.AllowAuthorizationCodeFlow();
+
+        options.AddDevelopmentEncryptionCertificate()
+            .AddDevelopmentSigningCertificate();
+
+        options.UseAspNetCore()
+            .EnableStatusCodePagesIntegration()
+            .EnableRedirectionEndpointPassthrough();
+
+        options.UseSystemNetHttp()
+            .SetProductInformation(typeof(Program).Assembly);
+
+        // Configure external authentication providers
+        var externalAuthConfig = builder.Configuration.GetSection("ExternalAuth");
+        if (!externalAuthConfig.Exists()) return;
+
+        // Google
+        var googleAuthConfig = externalAuthConfig.GetSection("Google");
+        if (googleAuthConfig.Exists())
+        {
+            var clientId = googleAuthConfig["ClientId"]!;
+            var clientSecret = googleAuthConfig["ClientSecret"]!;
+            options.UseWebProviders().AddGoogle(authOptions =>
+            {
+                authOptions.SetClientId(clientId)
+                    .SetClientSecret(clientSecret)
+                    .SetRedirectUri("api/Auth/Callback/Google");
+            });
+        }
+
+        // GitHub
+        var githubAuthConfig = externalAuthConfig.GetSection("GitHub");
+        if (githubAuthConfig.Exists())
+        {
+            var clientId = githubAuthConfig["ClientId"]!;
+            var clientSecret = githubAuthConfig["ClientSecret"]!;
+            options.UseWebProviders().AddGitHub(authOptions =>
+            {
+                authOptions.SetClientId(clientId)
+                    .SetClientSecret(clientSecret)
+                    .SetRedirectUri("api/Auth/Callback/GitHub");
+            });
+        }
+    })
     .AddValidation(options =>
     {
         // Import the configuration from the local OpenIddict server instance.
@@ -230,25 +216,47 @@ builder.Services.AddOpenIddict()
         options.UseAspNetCore();
     });
 
-builder.Services.AddAuthorization();
+// Add controllers and generate Swagger/OpenAPI documentation
+// Learn more at https://aka.ms/aspnetcore/swashbuckle
 
-// Add controllers' services
-builder.Services.AddScoped<IJwtService, JwtService>();
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IUserSessionService, UserSessionService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddControllers();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description =
+            "JWT Authorization header using the Bearer scheme (Example: 'Bearer 12345abcdef')",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT"
+    });
 
-// Add problem details
-builder.Services.AddProblemDetails();
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
-// Add exception handler
-builder.Services.AddExceptionHandler<AppExceptionHandler>();
 
 // Configure the HTTP request pipeline.
 var app = builder.Build();
 
 await ApplicationDbInitializer.SeedAsync(app.Services);
 
+app.UseForwardedHeaders();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
@@ -257,12 +265,11 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseMigrationsEndPoint();
 }
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
+// if (!app.Environment.IsDevelopment())
+app.UseHttpsRedirection();
 
 app.UseRouting();
 app.UseCors(options =>
@@ -275,8 +282,8 @@ app.UseCors(options =>
         );
 });
 
-app.UseAuthorization();
 app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 app.MapDefaultControllerRoute();

@@ -91,7 +91,7 @@ public class UserSessionService : IUserSessionService
             RefreshToken = refreshToken,
             RefreshTokenExpiresAt =
                 DateTime.UtcNow.AddMinutes(
-                    double.Parse(_configuration["Token:RefreshToken:ExpiresInMinutes"]))
+                    double.Parse(_configuration["Token:RefreshToken:ExpiresInMinutes"]!))
         };
 
         return await _userSessionRepositorySql.AddAsync(userSessionSql);
@@ -121,7 +121,7 @@ public class UserSessionService : IUserSessionService
         userSessionSql.RefreshToken = newRefreshToken;
         userSessionSql.RefreshTokenExpiresAt =
             DateTime.UtcNow.AddMinutes(
-                double.Parse(_configuration["Token:RefreshToken:ExpiresInMinutes"]));
+                double.Parse(_configuration["Token:RefreshToken:ExpiresInMinutes"]!));
 
         return await _userSessionRepositorySql.UpdateAsync(userSessionSql);
     }

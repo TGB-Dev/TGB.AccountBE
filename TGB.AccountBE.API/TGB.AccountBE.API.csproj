@@ -5,39 +5,37 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-      <UserSecretsId>1d0222ae-cabe-4fde-a809-d86d624d6133</UserSecretsId>
-  </PropertyGroup>
+        <UserSecretsId>1d0222ae-cabe-4fde-a809-d86d624d6133</UserSecretsId>
+    </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.11" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.11" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers" Version="9.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="9.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.11"/>
+        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.11" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.11"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers" Version="9.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="9.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.1">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime" Version="9.0.2" />
-        <PackageReference Include="OpenIddict.AspNetCore" Version="6.0.0" />
-        <PackageReference Include="OpenIddict.EntityFrameworkCore" Version="6.0.0" />
-        <PackageReference Include="OpenIddict.EntityFrameworkCore.Models" Version="6.0.0" />
-        <PackageReference Include="OpenIddict.Quartz" Version="6.0.0" />
-        <PackageReference Include="OpenIddict.AspNetCore" Version="6.0.0" />
-        <PackageReference Include="OpenIddict.EntityFrameworkCore" Version="6.0.0" />
-        <PackageReference Include="OpenIddict.EntityFrameworkCore.Models" Version="6.0.0" />
-        <PackageReference Include="OpenIddict.Quartz" Version="6.0.0" />
-        <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.10.0" />
-        <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.10.0" />
-        <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.10.0" />
-        <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.10.1" />
-        <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.10.0" />
-        <PackageReference Include="Quartz" Version="3.13.1" />
-        <PackageReference Include="Quartz.Extensions.Hosting" Version="3.13.1" />
-        <PackageReference Include="Redis.OM" Version="0.7.6" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
+        <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.3" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime" Version="9.0.3" />
+        <PackageReference Include="OpenIddict.AspNetCore" Version="6.0.0"/>
+        <PackageReference Include="OpenIddict.EntityFrameworkCore" Version="6.0.0"/>
+        <PackageReference Include="OpenIddict.EntityFrameworkCore.Models" Version="6.0.0"/>
+        <PackageReference Include="OpenIddict.Quartz" Version="6.0.0"/>
+        <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.11.1" />
+        <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.11.1" />
+        <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.11.1" />
+        <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.10.1"/>
+        <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.10.0"/>
+        <PackageReference Include="Quartz" Version="3.13.1"/>
+        <PackageReference Include="Quartz.Extensions.Hosting" Version="3.13.1"/>
+        <PackageReference Include="Redis.OM" Version="0.7.6"/>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0"/>
     </ItemGroup>
 
     <ItemGroup>
