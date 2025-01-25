@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
 using TGB.AccountBE.API.Constants;
 using TGB.AccountBE.API.Dtos.Auth;
@@ -9,8 +7,9 @@ using TGB.AccountBE.API.Models.Sql;
 
 namespace TGB.AccountBE.API.Services;
 
-public partial class AuthService : IAuthService
+public class AuthService : IAuthService
 {
+    private readonly IRandomPasswordGenerator _randomPasswordGenerator;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IUserSessionService _userSessionService;
@@ -18,11 +17,13 @@ public partial class AuthService : IAuthService
     public AuthService(
         SignInManager<ApplicationUser> signInManager,
         UserManager<ApplicationUser> userManager,
-        IUserSessionService userSessionService)
+        IUserSessionService userSessionService,
+        IRandomPasswordGenerator randomPasswordGenerator)
     {
         _signInManager = signInManager;
         _userManager = userManager;
         _userSessionService = userSessionService;
+        _randomPasswordGenerator = randomPasswordGenerator;
     }
 
     public async Task<RegisterResDto> Register(RegisterReqDto dto, bool isEmailConfirmed = false)
@@ -41,7 +42,7 @@ public partial class AuthService : IAuthService
             UserName = dto.UserName,
             Email = dto.Email,
             DateOfBirth = dto.DateOfBirth.UtcDateTime,
-            EmailConfirmed = isEmailConfirmed,
+            EmailConfirmed = isEmailConfirmed
         };
 
         var createdUser = await _userManager.CreateAsync(user, dto.Password);
@@ -126,21 +127,17 @@ public partial class AuthService : IAuthService
                 Email = dto.Email,
                 UserName = dto.UserName,
                 DateOfBirth = dto.DateOfBirth.UtcDateTime,
-                Password = _generateRandomPassword(),
-            }, isEmailConfirmed: true);
+                Password = _randomPasswordGenerator.Generate()
+            }, true);
 
             if (!result.Succeeded)
-            {
                 throw new Exception($"Error while registering user via OIDC: {result.Message}");
-            }
 
             user = await _userManager.FindByEmailAsync(dto.Email);
         }
 
         if (user == null)
-        {
             throw new InvalidDataException("The created user from OAuth service is null");
-        }
 
         var userSession = await _userSessionService.CreateUserSession(user);
 
@@ -150,37 +147,4 @@ public partial class AuthService : IAuthService
             RefreshToken = userSession.RefreshToken
         };
     }
-
-    private static string _generateRandomPassword()
-    {
-        // The password requirements are:
-        // 1. Has at least 1 number
-        // 2. Has at least 1 letter (A-Z or a-z)
-        // 3. Has the minimum length of 8
-
-        // To prevent brute-forcing attacks against accounts that are registered with OAuth providers,
-        // we generate a password that:
-        // 1. Satisfies the above requirements
-        // 2. Has the minimum length of 32
-
-        const int MINIMUM_LENGTH = 32;
-
-        // The datasets are inspired from https://github.com/bitwarden/clients/blob/main/libs/tools/generator/core/src/engine/data.ts
-        const string LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-        const string NUMBERS = "0123456789";
-        const string SPECIAL_CHARS = "!@#$%^&*";
-
-        var password =
-            "";
-        do
-        {
-            password =
-                RandomNumberGenerator.GetString(LETTERS + NUMBERS + SPECIAL_CHARS, MINIMUM_LENGTH);
-        } while (!PasswordRegex().IsMatch(password));
-
-        return password;
-    }
-
-    [GeneratedRegex(UserInfoRules.PASSWORD_PATTERN)]
-    private static partial Regex PasswordRegex();
 }

@@ -102,6 +102,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserSessionService, UserSessionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IOidcAuthService, OidcAuthService>();
+builder.Services.AddScoped<IRandomPasswordGenerator, RandomPasswordGenerator>();
 
 // Add problem details
 builder.Services.AddProblemDetails();

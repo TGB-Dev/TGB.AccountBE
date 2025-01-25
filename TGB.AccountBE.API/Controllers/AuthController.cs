@@ -1,6 +1,5 @@
 ﻿using System.Security.Claims;
 using System.Text.RegularExpressions;
-using Humanizer;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using OpenIddict.Client.AspNetCore;
@@ -78,16 +77,14 @@ public partial class AuthController : ControllerBase
         var displayName = result.Principal.FindFirst(ClaimTypes.Name)!.Value;
         var email = result.Principal.FindFirst(ClaimTypes.Email)!.Value;
         var userNameRandomNumber = new Random().Next(0, 9999);
-        var processedDisplayName = DisallowedUserNameCharsRegex().Replace(displayName.Trim().Replace(" ", ""), "");
+        var processedDisplayName = DisallowedUserNameCharsRegex()
+            .Replace(displayName.Trim().Replace(" ", ""), "");
         var maxUserNameLength = Math.Min(32 - 4, processedDisplayName.Length);
         var userName = processedDisplayName[..maxUserNameLength] +
                        userNameRandomNumber.ToString().PadLeft(4, '0');
         var dateOfBirthClaim = result.Principal.FindFirst(ClaimTypes.DateOfBirth);
         var dateOfBirth = DateTimeOffset.Now;
-        if (dateOfBirthClaim != null)
-        {
-            DateTimeOffset.Parse(dateOfBirthClaim.Value);
-        }
+        if (dateOfBirthClaim != null) DateTimeOffset.Parse(dateOfBirthClaim.Value);
 
         var res = await _authService.ExternalLogin(new ExternalLoginReqDto
         {
