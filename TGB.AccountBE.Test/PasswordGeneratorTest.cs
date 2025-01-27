@@ -13,7 +13,7 @@ public class PasswordGeneratorTest
         var generator = new RandomPasswordGenerator();
         var password = generator.Generate();
 
-        Assert.Matches(UserInfoRules.PASSWORD_PATTERN, password);
+        Assert.Matches(AuthRules.PASSWORD_PATTERN, password);
         Assert.Equal(PASSWORD_LENGTH, password.Length);
     }
 
@@ -29,7 +29,7 @@ public class PasswordGeneratorTest
         {
             var password = generator.Generate();
 
-            Assert.Matches(UserInfoRules.PASSWORD_PATTERN, password);
+            Assert.Matches(AuthRules.PASSWORD_PATTERN, password);
             Assert.Equal(PASSWORD_LENGTH, password.Length);
             Assert.DoesNotContain(password, passwordSet);
         }

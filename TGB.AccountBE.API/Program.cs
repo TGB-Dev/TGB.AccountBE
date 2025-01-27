@@ -190,7 +190,8 @@ builder.Services.AddOpenIddict()
             {
                 authOptions.SetClientId(clientId)
                     .SetClientSecret(clientSecret)
-                    .SetRedirectUri("api/Auth/Callback/Google");
+                    .SetRedirectUri("api/Auth/Callback/Google")
+                    .AddScopes(Scopes.Email, Scopes.Profile);
             });
         }
 

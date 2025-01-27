@@ -2,10 +2,12 @@
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
+using OpenIddict.Abstractions;
 using OpenIddict.Client.AspNetCore;
 using OpenIddict.Client.WebIntegration;
 using TGB.AccountBE.API.Constants;
 using TGB.AccountBE.API.Dtos.Auth;
+using TGB.AccountBE.API.Exceptions.ErrorExceptions;
 using TGB.AccountBE.API.Interfaces.Services;
 
 namespace TGB.AccountBE.API.Controllers;
@@ -68,22 +70,42 @@ public partial class AuthController : ControllerBase
     [HttpPost("Callback/{provider}")]
     public async Task<ActionResult<LoginResDto>> ExternalLoginCallback(string provider)
     {
+        if (!AuthRules.SUPPORTED_EXTERNAL_OAUTH_PROVIDERS.Contains(provider))
+        {
+            throw new BadRequestErrorException("The OAuth provider is not supported",
+                "OAuthProviderNotSupported");
+        }
+
         var result =
             await HttpContext.AuthenticateAsync(OpenIddictClientAspNetCoreDefaults
                 .AuthenticationScheme);
         if (!result.Succeeded)
             return Challenge(OpenIddictClientAspNetCoreDefaults.AuthenticationScheme);
 
-        var displayName = result.Principal.FindFirst(ClaimTypes.Name)!.Value;
-        var email = result.Principal.FindFirst(ClaimTypes.Email)!.Value;
-        var userNameRandomNumber = new Random().Next(0, 9999);
-        var processedDisplayName = DisallowedUserNameCharsRegex()
-            .Replace(displayName.Trim().Replace(" ", ""), "");
-        var maxUserNameLength = Math.Min(32 - 4, processedDisplayName.Length);
-        var userName = processedDisplayName[..maxUserNameLength] +
-                       userNameRandomNumber.ToString().PadLeft(4, '0');
-        var dateOfBirthClaim = result.Principal.FindFirst(ClaimTypes.DateOfBirth);
-        var dateOfBirth = DateTimeOffset.Now;
+        var displayName = "";
+        var email = "";
+        var userName = "";
+        var username = "";
+        Claim dateOfBirthClaim = null;
+        var dateOfBirth = DateTimeOffset.UtcNow;
+
+        displayName = result.Principal.FindFirst(ClaimTypes.Name)!.Value;
+        email = result.Principal.FindFirst(ClaimTypes.Email)!.Value;
+
+        switch (provider)
+        {
+            case "GitHub":
+                // Reuse the username from user's GitHub username
+                userName = result.Principal.GetClaim("login");
+                dateOfBirthClaim = result.Principal.FindFirst(ClaimTypes.DateOfBirth);
+                break;
+            case "Google":
+                // Google doesn't provide user's date of birth
+                userName = _generateRandomUserName(displayName);
+                break;
+        }
+
+
         if (dateOfBirthClaim != null) DateTimeOffset.Parse(dateOfBirthClaim.Value);
 
         var res = await _authService.ExternalLogin(new ExternalLoginReqDto
@@ -97,6 +119,20 @@ public partial class AuthController : ControllerBase
         return Ok(res);
     }
 
-    [GeneratedRegex(UserInfoRules.USERNAME_DISALLOWED_CHARS_PATTERN)]
+    [GeneratedRegex(AuthRules.USERNAME_DISALLOWED_CHARS_PATTERN)]
     private static partial Regex DisallowedUserNameCharsRegex();
+
+    private static string _generateRandomUserName(string displayName)
+    {
+        var randomNumber = new Random().Next(0, 9999);
+        // Remove forbidden characters and spaces
+        var filteredUserName = DisallowedUserNameCharsRegex()
+            .Replace(displayName.Trim().Replace(" ", ""), "");
+        var takenLength =
+            Math.Min(AuthRules.MAX_USERNAME_LENGTH - AuthRules.USERNAME_RANDOM_PADDING,
+                filteredUserName.Length);
+
+        return filteredUserName[..takenLength] +
+               randomNumber.ToString().PadLeft(AuthRules.USERNAME_RANDOM_PADDING, '0');
+    }
 }
