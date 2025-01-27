@@ -90,7 +90,8 @@ public class AuthController : ControllerBase
         {
             case "GitHub":
                 // Reuse the username from user's GitHub username
-                userName = result.Principal.GetClaim("login")!;
+                userName = result.Principal.GetClaim("login") ??
+                           _authService.GenerateUserNameFromDisplayName(displayName);
                 dateOfBirthClaim = result.Principal.FindFirst(ClaimTypes.DateOfBirth);
                 break;
             case "Google":
