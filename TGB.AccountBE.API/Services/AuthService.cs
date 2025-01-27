@@ -131,13 +131,17 @@ public class AuthService : IAuthService
             }, true);
 
             if (!result.Succeeded)
-                throw new Exception($"Error while registering user via OIDC: {result.Message}");
+                throw new BadRequestErrorException(
+                    nameof(HttpErrorResponses.OAuthRegistrationError),
+                    HttpErrorResponses.OAuthRegistrationError);
 
             user = await _userManager.FindByEmailAsync(dto.Email);
         }
 
         if (user == null)
-            throw new InvalidDataException("The created user from OAuth service is null");
+            throw new BadRequestErrorException(
+                nameof(HttpErrorResponses.InvalidOAuthRegisteredUser),
+                HttpErrorResponses.InvalidOAuthRegisteredUser);
 
         var userSession = await _userSessionService.CreateUserSession(user);
 

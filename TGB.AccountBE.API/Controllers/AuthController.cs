@@ -71,10 +71,8 @@ public partial class AuthController : ControllerBase
     public async Task<ActionResult<LoginResDto>> ExternalLoginCallback(string provider)
     {
         if (!AuthRules.SUPPORTED_EXTERNAL_OAUTH_PROVIDERS.Contains(provider))
-        {
-            throw new BadRequestErrorException("The OAuth provider is not supported",
-                "OAuthProviderNotSupported");
-        }
+            throw new BadRequestErrorException(nameof(HttpErrorResponses.OAuthProviderNotSupported),
+                HttpErrorResponses.OAuthProviderNotSupported);
 
         var result =
             await HttpContext.AuthenticateAsync(OpenIddictClientAspNetCoreDefaults

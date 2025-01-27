@@ -19,4 +19,9 @@ public static class HttpErrorResponses
 
     // RefreshToken errors
     public const string RefreshTokenExpired = "Refresh token expired";
+
+    // OIDC/OAuth errors
+    public const string OAuthProviderNotSupported = "OAuth provider is not supported";
+    public const string OAuthRegistrationError = "Error while registering user via OAuth provider";
+    public const string InvalidOAuthRegisteredUser = "Invalid registered user from OAuth provider";
 }

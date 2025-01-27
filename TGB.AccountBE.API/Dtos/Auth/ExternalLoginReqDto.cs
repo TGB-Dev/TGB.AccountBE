@@ -10,8 +10,8 @@ public class ExternalLoginReqDto
     [Required]
     [MinLength(6)]
     [MaxLength(32)]
-    [RegularExpression(Constants.AuthRules.USERNAME_PATTERN,
-        ErrorMessage = Constants.AuthRules.USERNAME_ERROR_MESSAGE)]
+    [RegularExpression(AuthRules.USERNAME_PATTERN,
+        ErrorMessage = AuthRules.USERNAME_ERROR_MESSAGE)]
     public required string UserName { get; set; }
 
     [Required] [EmailAddress] public required string Email { get; set; }
