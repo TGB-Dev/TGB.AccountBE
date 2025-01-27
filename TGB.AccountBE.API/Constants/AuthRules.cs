@@ -4,9 +4,13 @@ public static class AuthRules
 {
     public const string ALLOWED_USERNAME_CHARS =
         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_";
+
     public const string USERNAME_PATTERN = @"^[a-zA-Z0-9\-_]+$";
     public const string USERNAME_DISALLOWED_CHARS_PATTERN = @"[^a-zA-Z0-9\-_]";
-    public const string USERNAME_ERROR_MESSAGE = "UserName must contain only letters, numbers, dashes and underscores";
+
+    public const string USERNAME_ERROR_MESSAGE =
+        "UserName must contain only letters, numbers, dashes and underscores";
+
     public const string PASSWORD_PATTERN = @"^(?=.*[A-Za-z])(?=.*\d).+$";
 
     public const string PASSWORD_ERROR_MESSAGE =
