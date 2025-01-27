@@ -1,5 +1,4 @@
 ﻿using System.Security.Claims;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using OpenIddict.Abstractions;
@@ -14,7 +13,7 @@ namespace TGB.AccountBE.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public partial class AuthController : ControllerBase
+public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
 
@@ -80,26 +79,23 @@ public partial class AuthController : ControllerBase
         if (!result.Succeeded)
             return Challenge(OpenIddictClientAspNetCoreDefaults.AuthenticationScheme);
 
-        var displayName = "";
-        var email = "";
         var userName = "";
-        var username = "";
-        Claim dateOfBirthClaim = null;
+        Claim? dateOfBirthClaim = null;
         var dateOfBirth = DateTimeOffset.UtcNow;
 
-        displayName = result.Principal.FindFirst(ClaimTypes.Name)!.Value;
-        email = result.Principal.FindFirst(ClaimTypes.Email)!.Value;
+        var displayName = result.Principal.FindFirst(ClaimTypes.Name)!.Value;
+        var email = result.Principal.FindFirst(ClaimTypes.Email)!.Value;
 
         switch (provider)
         {
             case "GitHub":
                 // Reuse the username from user's GitHub username
-                userName = result.Principal.GetClaim("login");
+                userName = result.Principal.GetClaim("login")!;
                 dateOfBirthClaim = result.Principal.FindFirst(ClaimTypes.DateOfBirth);
                 break;
             case "Google":
                 // Google doesn't provide user's date of birth
-                userName = _generateRandomUserName(displayName);
+                userName = _authService.GenerateUserNameFromDisplayName(displayName);
                 break;
         }
 
@@ -115,22 +111,5 @@ public partial class AuthController : ControllerBase
         });
 
         return Ok(res);
-    }
-
-    [GeneratedRegex(AuthRules.USERNAME_DISALLOWED_CHARS_PATTERN)]
-    private static partial Regex DisallowedUserNameCharsRegex();
-
-    private static string _generateRandomUserName(string displayName)
-    {
-        var randomNumber = new Random().Next(0, 9999);
-        // Remove forbidden characters and spaces
-        var filteredUserName = DisallowedUserNameCharsRegex()
-            .Replace(displayName.Trim().Replace(" ", ""), "");
-        var takenLength =
-            Math.Min(AuthRules.MAX_USERNAME_LENGTH - AuthRules.USERNAME_RANDOM_PADDING,
-                filteredUserName.Length);
-
-        return filteredUserName[..takenLength] +
-               randomNumber.ToString().PadLeft(AuthRules.USERNAME_RANDOM_PADDING, '0');
     }
 }

@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
 using TGB.AccountBE.API.Constants;
 using TGB.AccountBE.API.Dtos.Auth;
@@ -7,7 +8,7 @@ using TGB.AccountBE.API.Models.Sql;
 
 namespace TGB.AccountBE.API.Services;
 
-public class AuthService : IAuthService
+public partial class AuthService : IAuthService
 {
     private readonly IRandomPasswordGenerator _randomPasswordGenerator;
     private readonly SignInManager<ApplicationUser> _signInManager;
@@ -151,4 +152,21 @@ public class AuthService : IAuthService
             RefreshToken = userSession.RefreshToken
         };
     }
+
+    public string GenerateUserNameFromDisplayName(string displayName)
+    {
+        var randomNumber = new Random().Next(0, 9999);
+        // Remove forbidden characters and spaces
+        var filteredUserName = DisallowedUserNameCharsRegex()
+            .Replace(displayName.Trim().Replace(" ", ""), "");
+        var takenLength =
+            Math.Min(AuthRules.MAX_USERNAME_LENGTH - AuthRules.USERNAME_RANDOM_PADDING,
+                filteredUserName.Length);
+
+        return filteredUserName[..takenLength] +
+               randomNumber.ToString().PadLeft(AuthRules.USERNAME_RANDOM_PADDING, '0');
+    }
+
+    [GeneratedRegex(AuthRules.USERNAME_DISALLOWED_CHARS_PATTERN)]
+    private static partial Regex DisallowedUserNameCharsRegex();
 }
