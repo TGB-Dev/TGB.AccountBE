@@ -485,3 +485,8 @@ $RECYCLE.BIN/
 
 # SQL Migrations
 [Mm]igrations/
+
+# appsettings files
+appsettings.json
+appsettings.*.json
+!appsettings.Example.json
