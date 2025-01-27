@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Quartz;
 using Redis.OM;
+using TGB.AccountBE.API.Constants;
 using TGB.AccountBE.API.Database;
 using TGB.AccountBE.API.Exceptions;
 using TGB.AccountBE.API.Interfaces.Repository.RedisOm;
@@ -60,7 +61,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
         // User settings
         options.User.RequireUniqueEmail = true;
         options.User.AllowedUserNameCharacters =
-            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            AuthRules.ALLOWED_USERNAME_CHARS;
 
         // Signin settings
         options.SignIn.RequireConfirmedEmail = true;
