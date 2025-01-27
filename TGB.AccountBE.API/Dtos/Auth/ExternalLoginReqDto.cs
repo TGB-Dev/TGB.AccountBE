@@ -3,7 +3,7 @@ using TGB.AccountBE.API.Constants;
 
 namespace TGB.AccountBE.API.Dtos.Auth;
 
-public class ExternalLoginReqDto
+public record ExternalLoginReqDto
 {
     [Required] public required string DisplayName { get; set; }
 

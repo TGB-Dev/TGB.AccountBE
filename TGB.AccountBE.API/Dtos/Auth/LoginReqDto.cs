@@ -3,7 +3,7 @@ using TGB.AccountBE.API.Constants;
 
 namespace TGB.AccountBE.API.Dtos.Auth;
 
-public class LoginReqDto
+public record LoginReqDto
 {
     [Required]
     [MinLength(AuthRules.MIN_USERNAME_LENGTH)]

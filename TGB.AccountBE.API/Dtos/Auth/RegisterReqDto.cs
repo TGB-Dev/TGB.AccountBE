@@ -3,7 +3,7 @@ using TGB.AccountBE.API.Constants;
 
 namespace TGB.AccountBE.API.Dtos.Auth;
 
-public class RegisterReqDto
+public record RegisterReqDto
 {
     [Required] public required string DisplayName { get; set; }
 
