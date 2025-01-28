@@ -1,3 +1,4 @@
+using System.Net.Mime;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -281,10 +282,12 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors(options =>
 {
+    var corsOrigins = builder.Configuration.GetSection("CorsOrigins").Get<string[]>();
     options
         .AllowAnyMethod()
+        .AllowAnyHeader()
         .WithOrigins(
-            builder.Configuration.GetSection("CorsOrigins").Get<string[]>() ??
+            corsOrigins ??
             ["http://localhost:4200"]
         );
 });
