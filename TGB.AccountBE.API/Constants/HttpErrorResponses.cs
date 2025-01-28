@@ -25,4 +25,7 @@ public static class HttpErrorResponses
     public const string OAuthRegistrationError = "Error while registering user via OAuth provider";
     public const string InvalidOAuthRegisteredUser = "Invalid registered user from OAuth provider";
     public const string OAuthClientIdNotProvided = "OAuth client ID not provided";
+    public const string OidcInvalidConsentType = "OIDC consent type is invalid";
+    public const string OidcUserNotAllowedToSignIn = "OIDC user is not allowed to sign in";
+    public const string OidcInvalidToken = "OIDC token is invalid";
 }

@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace TGB.AccountBE.API.Dtos.Auth;
 
 public record RefreshTokenReqDto

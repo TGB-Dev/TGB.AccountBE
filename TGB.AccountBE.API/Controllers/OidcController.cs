@@ -1,9 +1,6 @@
 using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.JsonWebTokens;
 using OpenIddict.Server.AspNetCore;
 using TGB.AccountBE.API.Interfaces.Services;
 using TGB.AccountBE.API.UserSessionValidation;
@@ -24,13 +21,15 @@ public class OidcController : ControllerBase
     [HttpGet("[action]")]
     [HttpPost("[action]")]
     [IgnoreAntiforgeryToken]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = OpenIddictServerAspNetCoreDefaults.AuthenticationScheme)]
     [UserSessionValidate]
     public async Task<IActionResult> Authorize()
     {
         var request = HttpContext.GetOpenIddictServerRequest();
-        var res = await _authService.Authorize(request);
-        return Ok(res);
+        var principal = User;
+        var identity = await _authService.Authorize(request, principal);
+        return SignIn(identity,
+            OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
     }
 
     [HttpPost("[action]")]
@@ -44,17 +43,20 @@ public class OidcController : ControllerBase
     [HttpPost("Token")]
     [IgnoreAntiforgeryToken]
     [Produces("application/json")]
+    [Authorize(AuthenticationSchemes = OpenIddictServerAspNetCoreDefaults.AuthenticationScheme)]
+    [UserSessionValidate]
     public async Task<IActionResult> Exchange()
     {
         var request = HttpContext.GetOpenIddictServerRequest();
-        var res = await _authService.Exchange();
-        return Ok(res);
+        var principal = User;
+        var identity = await _authService.Exchange(request, principal);
+        return SignIn(identity, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
     }
 
-    [Authorize(AuthenticationSchemes = OpenIddictServerAspNetCoreDefaults.AuthenticationScheme)]
-    // [UserSessionValidation.UserSessionValidate]
     [HttpGet("[action]")]
     [Produces("application/json")]
+    [Authorize(AuthenticationSchemes = OpenIddictServerAspNetCoreDefaults.AuthenticationScheme)]
+    [UserSessionValidate]
     public async Task<IActionResult> UserInfo()
     {
         var res = await _authService.UserInfo();
