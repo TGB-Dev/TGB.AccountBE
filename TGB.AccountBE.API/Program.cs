@@ -53,7 +53,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
         // Password settings
         options.Password.RequireDigit = true;
-        options.Password.RequiredLength = 8;
+        options.Password.RequiredLength = AuthRules.MIN_PASSWORD_LENGTH;
         options.Password.RequireUppercase = false;
         options.Password.RequireLowercase = false;
         options.Password.RequireNonAlphanumeric = false;
@@ -76,7 +76,7 @@ builder.Services.AddAuthentication(options =>
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
         options.DefaultForbidScheme = IdentityConstants.ApplicationScheme;
         options.DefaultSignOutScheme =
-            IdentityConstants.ApplicationScheme;
+            JwtBearerDefaults.AuthenticationScheme;
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
         options.DefaultChallengeScheme =
             JwtBearerDefaults.AuthenticationScheme;
@@ -164,7 +164,7 @@ builder.Services.AddOpenIddict()
     })
     .AddClient(options =>
     {
-        options.SetRedirectionEndpointUris("api/Auth/Login");
+        options.SetRedirectionEndpointUris("api/Auth/Callback");
         options.AllowAuthorizationCodeFlow();
 
         options.AddDevelopmentEncryptionCertificate()
@@ -257,6 +257,7 @@ builder.Services.AddSwaggerGen(options =>
 // Configure the HTTP request pipeline.
 var app = builder.Build();
 
+// Seed the database
 await ApplicationDbInitializer.SeedAsync(app.Services);
 
 app.UseForwardedHeaders();
@@ -265,7 +266,10 @@ app.UseStatusCodePages();
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage();
+    // Don't use this because:
+    // 1. The AppExceptionHandler is detailed enough
+    // 2. This option is conflicting with the already existing AppExceptionHandler
+    // app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
     app.UseMigrationsEndPoint();

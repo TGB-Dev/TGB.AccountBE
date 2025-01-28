@@ -37,22 +37,22 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("Login/Google")]
-    public ChallengeResult LoginWithGoogle(string returnUrl)
+    public ChallengeResult LoginWithGoogle(string returnUri = "/")
     {
         var properties = new AuthenticationProperties
         {
-            RedirectUri = Url.IsLocalUrl(returnUrl) ? returnUrl : "/"
+            RedirectUri = Url.IsLocalUrl(returnUri) ? returnUri : "/"
         };
 
         return Challenge(properties, OpenIddictClientWebIntegrationConstants.Providers.Google);
     }
 
     [HttpGet("Login/GitHub")]
-    public ChallengeResult LoginWithGitHub(string returnUrl)
+    public ChallengeResult LoginWithGitHub(string returnUri = "/")
     {
         var properties = new AuthenticationProperties
         {
-            RedirectUri = Url.IsLocalUrl(returnUrl) ? returnUrl : "/"
+            RedirectUri = Url.IsLocalUrl(returnUri) ? returnUri : "/"
         };
         return Challenge(properties, OpenIddictClientWebIntegrationConstants.Providers.GitHub);
     }

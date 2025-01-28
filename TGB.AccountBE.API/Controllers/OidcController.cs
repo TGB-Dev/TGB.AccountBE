@@ -1,8 +1,12 @@
 using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.JsonWebTokens;
 using OpenIddict.Server.AspNetCore;
 using TGB.AccountBE.API.Interfaces.Services;
+using TGB.AccountBE.API.UserSessionValidation;
 
 namespace TGB.AccountBE.API.Controllers;
 
@@ -20,10 +24,12 @@ public class OidcController : ControllerBase
     [HttpGet("[action]")]
     [HttpPost("[action]")]
     [IgnoreAntiforgeryToken]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [UserSessionValidate]
     public async Task<IActionResult> Authorize()
     {
         var request = HttpContext.GetOpenIddictServerRequest();
-        var res = await _authService.Authorize();
+        var res = await _authService.Authorize(request);
         return Ok(res);
     }
 

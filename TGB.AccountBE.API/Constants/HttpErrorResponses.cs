@@ -24,4 +24,5 @@ public static class HttpErrorResponses
     public const string OAuthProviderNotSupported = "OAuth provider is not supported";
     public const string OAuthRegistrationError = "Error while registering user via OAuth provider";
     public const string InvalidOAuthRegisteredUser = "Invalid registered user from OAuth provider";
+    public const string OAuthClientIdNotProvided = "OAuth client ID not provided";
 }

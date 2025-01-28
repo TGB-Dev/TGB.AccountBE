@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using OpenIddict.Abstractions;
+using TGB.AccountBE.API.Constants;
+using TGB.AccountBE.API.Exceptions.ErrorExceptions;
 using TGB.AccountBE.API.Interfaces.Services;
 using TGB.AccountBE.API.Models.Sql;
 
@@ -33,8 +35,26 @@ public class OidcAuthService : IOidcAuthService
         throw new NotImplementedException();
     }
 
-    public async Task<IActionResult> Authorize()
+    public async Task<IActionResult> Authorize(OpenIddictRequest request)
     {
+        // Currently we directly accept the request because:
+        // 1. We don't accept external client applications' requests
+        // 2. If needed in the future, the accept/deny functionality will be handled by the front-end
+        // team
+
+        // If this function is called, the user is authorized to do this, so we don't need to check
+        // that, and proceed to the client application authorization
+
+        if (request.ClientId == null)
+        {
+            throw new BadRequestErrorException(nameof(HttpErrorResponses.OAuthClientIdNotProvided),
+                HttpErrorResponses.OAuthClientIdNotProvided);
+        }
+
+        var application = await _applicationManager.FindByClientIdAsync(
+            request.ClientId
+        );
+
         throw new NotImplementedException();
     }
 
