@@ -282,14 +282,21 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors(options =>
 {
-    var corsOrigins = builder.Configuration.GetSection("CorsOrigins").Get<string[]>();
-    options
-        .AllowAnyMethod()
-        .AllowAnyHeader()
-        .WithOrigins(
-            corsOrigins ??
-            ["http://localhost:4200"]
-        );
+    if (app.Environment.IsDevelopment())
+    {
+        options.AllowAnyMethod().AllowAnyHeader().WithOrigins("*").WithHeaders("*");
+    }
+    else
+    {
+        var corsOrigins = builder.Configuration.GetSection("CorsOrigins").Get<string[]>();
+        options
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .WithOrigins(
+                corsOrigins ??
+                ["http://localhost:4200"]
+            );
+    }
 });
 
 app.UseAuthentication();
