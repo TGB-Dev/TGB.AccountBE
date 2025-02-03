@@ -39,7 +39,7 @@ public class OidcAuthService : IOidcAuthService
     }
 
     public async Task<ClaimsPrincipal> Authorize(OpenIddictRequest request,
-        ClaimsPrincipal principal)
+        string userId)
     {
         // Currently we directly accept the request because:
         // 1. We don't accept external client applications' requests
@@ -54,7 +54,11 @@ public class OidcAuthService : IOidcAuthService
         // Generate claim
         // Sign in the user
 
-        var user = await _userManager.GetUserAsync(principal);
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user is null)
+            throw new BadRequestErrorException(nameof(HttpErrorResponses.UserNotFound),
+                HttpErrorResponses.UserNotFound);
 
         if (request.ClientId == null)
             throw new BadRequestErrorException(nameof(HttpErrorResponses.OAuthClientIdNotProvided),
@@ -63,6 +67,10 @@ public class OidcAuthService : IOidcAuthService
         var application = await _applicationManager.FindByClientIdAsync(
             request.ClientId
         );
+
+        if (application is null)
+            throw new BadRequestErrorException(nameof(HttpErrorResponses.OidcInvalidApplication),
+                HttpErrorResponses.OidcInvalidApplication);
 
         if (await _applicationManager.GetConsentTypeAsync(application) is not OpenIddictConstants
                 .ConsentTypes.Explicit)
@@ -86,7 +94,7 @@ public class OidcAuthService : IOidcAuthService
         // Add the claims that will be persisted in the tokens.
         identity.SetClaim(OpenIddictConstants.Claims.Subject,
                 await _userManager.GetUserIdAsync(user))
-            .SetClaim(OpenIddictConstants.Claims.Email, await _userManager.GetEmailAsync(principal))
+            .SetClaim(OpenIddictConstants.Claims.Email, await _userManager.GetEmailAsync(user))
             .SetClaim(OpenIddictConstants.Claims.Name,
                 await _userManager.GetUserNameAsync(user))
             .SetClaim(OpenIddictConstants.Claims.PreferredUsername,
@@ -107,7 +115,9 @@ public class OidcAuthService : IOidcAuthService
         authorization ??= await _authorizationManager.CreateAsync(
             identity,
             await _userManager.GetUserIdAsync(user),
-            await _applicationManager.GetIdAsync(application),
+            await _applicationManager.GetIdAsync(application) ?? throw new BadRequestErrorException(
+                nameof(HttpErrorResponses.OidcInvalidApplication),
+                HttpErrorResponses.OidcInvalidApplication),
             OpenIddictConstants.AuthorizationTypes.Permanent,
             identity.GetScopes());
 
@@ -123,45 +133,45 @@ public class OidcAuthService : IOidcAuthService
     }
 
     public async Task<ClaimsPrincipal> Exchange(OpenIddictRequest request,
-        ClaimsPrincipal principal)
+        string userId, ClaimsPrincipal principal)
     {
-        if (request.IsAuthorizationCodeGrantType() || request.IsRefreshTokenGrantType())
-        {
-            // Retrieve the user profile corresponding to the authorization code/refresh token.
-            var user =
-                await _userManager.FindByIdAsync(
-                    principal.GetClaim(OpenIddictConstants.Claims.Subject));
-            if (user is null)
-                throw new BadRequestErrorException(nameof(HttpErrorResponses.OidcInvalidToken),
-                    HttpErrorResponses.OidcInvalidToken);
+        if (!request.IsAuthorizationCodeGrantType() && !request.IsRefreshTokenGrantType())
+            throw new BadRequestErrorException(nameof(HttpErrorResponses.OidcInvalidGrantType),
+                HttpErrorResponses.OidcInvalidGrantType);
 
-            // Ensure the user is still allowed to sign in.
-            if (!await _signInManager.CanSignInAsync(user))
-                throw new BadRequestErrorException(
-                    nameof(HttpErrorResponses.OidcUserNotAllowedToSignIn),
-                    HttpErrorResponses.OidcUserNotAllowedToSignIn);
+        // Retrieve the user profile corresponding to the authorization code/refresh token.
+        var user =
+            await _userManager.FindByIdAsync(userId);
+        if (user is null)
+            throw new BadRequestErrorException(nameof(HttpErrorResponses.UserNotFound),
+                HttpErrorResponses.UserNotFound);
 
-            var identity = new ClaimsIdentity(principal.Claims,
-                TokenValidationParameters.DefaultAuthenticationType,
-                OpenIddictConstants.Claims.Name,
-                OpenIddictConstants.Claims.Role);
+        // Ensure the user is still allowed to sign in.
+        if (!await _signInManager.CanSignInAsync(user))
+            throw new BadRequestErrorException(
+                nameof(HttpErrorResponses.OidcUserNotAllowedToSignIn),
+                HttpErrorResponses.OidcUserNotAllowedToSignIn);
 
-            // Override the user claims present in the principal in case they
-            // changed since the authorization code/refresh token was issued.
-            identity.SetClaim(OpenIddictConstants.Claims.Subject,
-                    await _userManager.GetUserIdAsync(user))
-                .SetClaim(OpenIddictConstants.Claims.Email, await _userManager.GetEmailAsync(user))
-                .SetClaim(OpenIddictConstants.Claims.Name,
-                    await _userManager.GetUserNameAsync(user))
-                .SetClaim(OpenIddictConstants.Claims.PreferredUsername,
-                    await _userManager.GetUserNameAsync(user))
-                .SetClaims(OpenIddictConstants.Claims.Role,
-                    [.. await _userManager.GetRolesAsync(user)]);
+        var identity = new ClaimsIdentity(principal.Claims,
+            TokenValidationParameters.DefaultAuthenticationType,
+            OpenIddictConstants.Claims.Name,
+            OpenIddictConstants.Claims.Role);
 
-            identity.SetDestinations(GetDestinations);
+        // Override the user claims present in the principal in case they
+        // changed since the authorization code/refresh token was issued.
+        identity.SetClaim(OpenIddictConstants.Claims.Subject,
+                await _userManager.GetUserIdAsync(user))
+            .SetClaim(OpenIddictConstants.Claims.Email, await _userManager.GetEmailAsync(user))
+            .SetClaim(OpenIddictConstants.Claims.Name,
+                await _userManager.GetUserNameAsync(user))
+            .SetClaim(OpenIddictConstants.Claims.PreferredUsername,
+                await _userManager.GetUserNameAsync(user))
+            .SetClaims(OpenIddictConstants.Claims.Role,
+                [.. await _userManager.GetRolesAsync(user)]);
 
-            return new ClaimsPrincipal(identity);
-        }
+        identity.SetDestinations(GetDestinations);
+
+        return new ClaimsPrincipal(identity);
     }
 
     public async Task<IActionResult> Logout()
@@ -179,6 +189,10 @@ public class OidcAuthService : IOidcAuthService
         // Note: by default, claims are NOT automatically included in the access and identity tokens.
         // To allow OpenIddict to serialize them, you must attach them a destination, that specifies
         // whether they should be included in access tokens, in identity tokens or in both.
+
+        if (claim.Subject is null)
+            throw new BadRequestErrorException(nameof(HttpErrorResponses.InvalidClaimSubject),
+                HttpErrorResponses.InvalidClaimSubject);
 
         switch (claim.Type)
         {

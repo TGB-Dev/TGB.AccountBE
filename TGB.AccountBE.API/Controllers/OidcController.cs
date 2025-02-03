@@ -1,7 +1,11 @@
 using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OpenIddict.Server.AspNetCore;
+using TGB.AccountBE.API.Constants;
+using TGB.AccountBE.API.Exceptions.ErrorExceptions;
+using TGB.AccountBE.API.Extensions;
 using TGB.AccountBE.API.Interfaces.Services;
 using TGB.AccountBE.API.UserSessionValidation;
 
@@ -9,6 +13,7 @@ namespace TGB.AccountBE.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class OidcController : ControllerBase
 {
     private readonly IOidcAuthService _authService;
@@ -21,13 +26,15 @@ public class OidcController : ControllerBase
     [HttpGet("[action]")]
     [HttpPost("[action]")]
     [IgnoreAntiforgeryToken]
-    [Authorize(AuthenticationSchemes = OpenIddictServerAspNetCoreDefaults.AuthenticationScheme)]
     [UserSessionValidate]
     public async Task<IActionResult> Authorize()
     {
-        var request = HttpContext.GetOpenIddictServerRequest();
-        var principal = User;
-        var identity = await _authService.Authorize(request, principal);
+        var request = HttpContext.GetOpenIddictServerRequest() ??
+                      throw new BadRequestErrorException(
+                          nameof(HttpErrorResponses.OidcInvalidServerRequest),
+                          HttpErrorResponses.OidcInvalidServerRequest);
+        var userId = User.GetUserId();
+        var identity = await _authService.Authorize(request, userId);
         return SignIn(identity,
             OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
     }
@@ -43,20 +50,20 @@ public class OidcController : ControllerBase
     [HttpPost("Token")]
     [IgnoreAntiforgeryToken]
     [Produces("application/json")]
-    [Authorize(AuthenticationSchemes = OpenIddictServerAspNetCoreDefaults.AuthenticationScheme)]
     [UserSessionValidate]
     public async Task<IActionResult> Exchange()
     {
-        var request = HttpContext.GetOpenIddictServerRequest();
+        var request = HttpContext.GetOpenIddictServerRequest() ??
+                      throw new BadRequestErrorException(
+                          nameof(HttpErrorResponses.OidcInvalidServerRequest),
+                          HttpErrorResponses.OidcInvalidServerRequest);
         var principal = User;
-        var identity = await _authService.Exchange(request, principal);
+        var identity = await _authService.Exchange(request, principal.GetUserId(), principal);
         return SignIn(identity, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
     }
 
     [HttpGet("[action]")]
     [Produces("application/json")]
-    [Authorize(AuthenticationSchemes = OpenIddictServerAspNetCoreDefaults.AuthenticationScheme)]
-    [UserSessionValidate]
     public async Task<IActionResult> UserInfo()
     {
         var res = await _authService.UserInfo();

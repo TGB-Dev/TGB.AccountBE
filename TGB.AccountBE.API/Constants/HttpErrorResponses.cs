@@ -20,6 +20,9 @@ public static class HttpErrorResponses
     // RefreshToken errors
     public const string RefreshTokenExpired = "Refresh token expired";
 
+    // Claim-related errors
+    public const string InvalidClaimSubject = "Claim subject is invalid";
+
     // OIDC/OAuth errors
     public const string OAuthProviderNotSupported = "OAuth provider is not supported";
     public const string OAuthRegistrationError = "Error while registering user via OAuth provider";
@@ -28,4 +31,7 @@ public static class HttpErrorResponses
     public const string OidcInvalidConsentType = "OIDC consent type is invalid";
     public const string OidcUserNotAllowedToSignIn = "OIDC user is not allowed to sign in";
     public const string OidcInvalidToken = "OIDC token is invalid";
+    public const string OidcInvalidGrantType = "OIDC grant type is invalid";
+    public const string OidcInvalidServerRequest = "OIDC server request is invalid";
+    public const string OidcInvalidApplication = "OIDC application is invalid";
 }

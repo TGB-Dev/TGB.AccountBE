@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Quartz;
 using Redis.OM;
+using TGB.AccountBE.API;
 using TGB.AccountBE.API.Constants;
 using TGB.AccountBE.API.Database;
 using TGB.AccountBE.API.Exceptions;
@@ -253,7 +254,9 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-
+// Add a worker to handle external application registration
+// TODO: replace this in production with an administration web UI
+builder.Services.AddHostedService<ApplicationRegisterWorker>();
 // Configure the HTTP request pipeline.
 var app = builder.Build();
 
@@ -275,7 +278,6 @@ if (app.Environment.IsDevelopment())
     app.UseMigrationsEndPoint();
 }
 
-// if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseRouting();
