@@ -15,21 +15,21 @@ public class AuthController : ControllerBase
         _authService = authService;
     }
 
-    [HttpPost("register")]
+    [HttpPost("[action]")]
     public async Task<IActionResult> Register([FromBody] RegisterReqDto body)
     {
         var res = await _authService.Register(body);
         return Ok(res);
     }
 
-    [HttpPost("login")]
+    [HttpPost("[action]")]
     public async Task<ActionResult<LoginResDto>> Login([FromBody] LoginReqDto body)
     {
         var res = await _authService.Login(body);
         return Ok(res);
     }
 
-    [HttpPost("refreshToken")]
+    [HttpPost("[action]")]
     public async Task<ActionResult<RefreshTokenResDto>> RefreshToken(
         [FromBody] RefreshTokenReqDto body)
     {

@@ -20,13 +20,13 @@ public class JwtService : IJwtService
     {
         var securityKey =
             new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_configuration["Token:AccessToken:SigningKey"]));
+                Encoding.UTF8.GetBytes(_configuration["Token:AccessToken:SigningKey"]!));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = GetClaimsIdentity(user),
             Expires = DateTime.UtcNow.AddMinutes(
-                double.Parse(_configuration["Token:AccessToken:ExpiresInMinutes"])),
+                double.Parse(_configuration["Token:AccessToken:ExpiresInMinutes"]!)),
             Issuer = _configuration["Token:AccessToken:Issuer"],
             Audience = _configuration["Token:AccessToken:Audience"],
             SigningCredentials = credentials
@@ -41,9 +41,9 @@ public class JwtService : IJwtService
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id),
-            new(JwtRegisteredClaimNames.UniqueName, user.UserName),
-            new(JwtRegisteredClaimNames.Name, user.DisplayName),
-            new(JwtRegisteredClaimNames.Email, user.Email)
+            new(JwtRegisteredClaimNames.UniqueName, user.UserName!),
+            new(JwtRegisteredClaimNames.Name, user.DisplayName!),
+            new(JwtRegisteredClaimNames.Email, user.Email!)
         };
         return new ClaimsIdentity(claims);
     }

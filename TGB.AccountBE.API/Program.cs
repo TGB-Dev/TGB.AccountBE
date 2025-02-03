@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using RabbitMQ.Client;
 using Redis.OM;
 using TGB.AccountBE.API.Database;
 using TGB.AccountBE.API.Exceptions;
@@ -59,11 +60,24 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     );
 });
 
+// Add RabbitMq services
+builder.Services.AddSingleton<IConnection>(_ =>
+{
+    var factory = new ConnectionFactory
+    {
+        HostName = builder.Configuration["RabbitMq:Host"]!,
+        UserName = builder.Configuration["RabbitMq:Username"]!,
+        Password = builder.Configuration["RabbitMq:Password"]!
+    };
+    return factory.CreateConnectionAsync().GetAwaiter().GetResult();
+});
+builder.Services.AddHostedService<RabbitMqSetupHostedService>();
+
 // Add Redis Om services
-builder.Services.AddHostedService<IndexCreationService>();
 builder.Services.AddSingleton(
     new RedisConnectionProvider(
         builder.Configuration.GetConnectionString("RedisConnection") ?? ""));
+builder.Services.AddHostedService<IndexCreationService>();
 
 // Add Redis repositories
 builder.Services
@@ -120,17 +134,21 @@ builder.Services.AddAuthentication(options =>
             ValidAudience = builder.Configuration["Token:AccessToken:Audience"],
             IssuerSigningKey =
                 new SymmetricSecurityKey(
-                    Encoding.UTF8.GetBytes(builder.Configuration["Token:AccessToken:SigningKey"]))
+                    Encoding.UTF8.GetBytes(builder.Configuration["Token:AccessToken:SigningKey"]!))
         };
     });
 
 builder.Services.AddAuthorization();
 
 // Add controllers' services
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserSessionService, UserSessionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+// Add database initializer
+builder.Services.AddHostedService<ApplicationDbInitializer>();
 
 // Add problem details
 builder.Services.AddProblemDetails();
@@ -140,8 +158,6 @@ builder.Services.AddExceptionHandler<AppExceptionHandler>();
 
 // Configure the HTTP request pipeline.
 var app = builder.Build();
-
-await ApplicationDbInitializer.SeedAsync(app.Services);
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();

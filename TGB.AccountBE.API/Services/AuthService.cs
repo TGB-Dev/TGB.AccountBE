@@ -9,6 +9,7 @@ namespace TGB.AccountBE.API.Services;
 
 public class AuthService : IAuthService
 {
+    private readonly IEmailService _emailService;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IUserSessionService _userSessionService;
@@ -16,20 +17,23 @@ public class AuthService : IAuthService
     public AuthService(
         SignInManager<ApplicationUser> signInManager,
         UserManager<ApplicationUser> userManager,
-        IUserSessionService userSessionService)
+        IUserSessionService userSessionService,
+        IEmailService emailService
+    )
     {
         _signInManager = signInManager;
         _userManager = userManager;
         _userSessionService = userSessionService;
+        _emailService = emailService;
     }
 
     public async Task<RegisterResDto> Register(RegisterReqDto dto)
     {
-        if (await _userManager.FindByNameAsync(dto.UserName) != null)
+        if (await _userManager.FindByNameAsync(dto.UserName) is not null)
             throw new BadRequestErrorException(nameof(HttpErrorResponses.UserNameAlreadyExists),
                 HttpErrorResponses.UserNameAlreadyExists);
 
-        if (await _userManager.FindByEmailAsync(dto.Email) != null)
+        if (await _userManager.FindByEmailAsync(dto.Email) is not null)
             throw new BadRequestErrorException(nameof(HttpErrorResponses.EmailAlreadyExists),
                 HttpErrorResponses.EmailAlreadyExists);
 
@@ -52,6 +56,9 @@ public class AuthService : IAuthService
             throw new Exception(
                 string.Join(", ", roleResult.Errors.Select(e => e.Description)));
 
+        var verificationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        await _emailService.SendAccountVerificationEmailAsync(user, verificationToken);
+
         return new RegisterResDto
         {
             Message = "User created successfully"
@@ -62,7 +69,7 @@ public class AuthService : IAuthService
     {
         Console.WriteLine($"Login: {dto.UserName}, {dto.Password}");
         var user = await _userManager.FindByNameAsync(dto.UserName);
-        if (user == null)
+        if (user is null)
             throw new BadRequestErrorException(
                 nameof(HttpErrorResponses.InvalidUserNameOrPassword),
                 HttpErrorResponses.InvalidUserNameOrPassword);

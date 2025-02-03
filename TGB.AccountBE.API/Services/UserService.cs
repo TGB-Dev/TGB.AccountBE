@@ -19,7 +19,7 @@ public class UserService : IUserService
     public async Task<MeResDto> Me(string userId)
     {
         var user = await _userManager.FindByIdAsync(userId);
-        if (user == null)
+        if (user is null)
             throw new BadRequestErrorException(nameof(HttpErrorResponses.UserNotFound),
                 HttpErrorResponses.UserNotFound);
 

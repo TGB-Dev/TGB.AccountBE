@@ -26,14 +26,14 @@ public class UserSessionValidateActionFilter : IAsyncActionFilter
             .Replace("Bearer ", "");
 
         var userSessionRedisOmResult = await _userSessionRepositoryRedisOm.GetByAccessToken(token);
-        if (userSessionRedisOmResult != null)
+        if (userSessionRedisOmResult is not null)
         {
             await next();
             return;
         }
 
         var userSessionSqlResult = await _userSessionRepositorySql.GetByAccessToken(token);
-        if (userSessionSqlResult == null)
+        if (userSessionSqlResult is null)
             throw new UnauthorizedErrorException(nameof(HttpErrorResponses.InvalidAccessToken),
                 HttpErrorResponses.InvalidAccessToken);
 
