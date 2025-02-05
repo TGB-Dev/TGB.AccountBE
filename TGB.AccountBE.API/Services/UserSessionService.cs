@@ -32,10 +32,10 @@ public class UserSessionService : IUserSessionService
         var userSessionRedisOm = await _userSessionRepositoryRedisOm.GetByIdAsync(userSessionId);
         var userSessionSql = await _userSessionRepositorySql.GetByIdAsync(userSessionId);
 
-        if (userSessionRedisOm != null)
+        if (userSessionRedisOm is not null)
             await _userSessionRepositoryRedisOm.DeleteAsync(userSessionRedisOm);
 
-        if (userSessionSql == null)
+        if (userSessionSql is null)
             throw new BadRequestErrorException(nameof(HttpErrorResponses.UserSessionNotFound),
                 HttpErrorResponses.UserSessionNotFound);
 
@@ -57,7 +57,7 @@ public class UserSessionService : IUserSessionService
     {
         var userSessionSql = await _userSessionRepositorySql.GetByRefreshToken(refreshToken);
 
-        if (userSessionSql == null)
+        if (userSessionSql is null)
             throw new BadRequestErrorException(nameof(HttpErrorResponses.UserSessionNotFound),
                 HttpErrorResponses.UserSessionNotFound);
 
@@ -68,17 +68,16 @@ public class UserSessionService : IUserSessionService
         var newAccessToken = _jwtService.GenerateAccessToken(userSessionSql.User);
         var newRefreshToken = GenerateRefreshToken();
 
-        var userSessionSqlNew =
-            await UpdateUserSessionSql(userSessionSql, newAccessToken, newRefreshToken);
+        await UpdateUserSessionSql(userSessionSql, newAccessToken, newRefreshToken);
 
         var userSessionRedisOm =
-            await _userSessionRepositoryRedisOm.GetByIdAsync(userSessionSqlNew.Id);
+            await _userSessionRepositoryRedisOm.GetByIdAsync(userSessionSql.Id);
 
-        if (userSessionRedisOm == null)
-            await CreateUserSessionRedisOm(userSessionSqlNew);
+        if (userSessionRedisOm is null)
+            await CreateUserSessionRedisOm(userSessionSql);
         else
-            await UpdateUserSessionRedisOm(userSessionSqlNew, userSessionRedisOm);
-        return userSessionSqlNew;
+            await UpdateUserSessionRedisOm(userSessionSql, userSessionRedisOm);
+        return userSessionSql;
     }
 
     private async Task<UserSessionSql> CreateUserSessionSql(ApplicationUser user,
@@ -91,7 +90,7 @@ public class UserSessionService : IUserSessionService
             RefreshToken = refreshToken,
             RefreshTokenExpiresAt =
                 DateTime.UtcNow.AddMinutes(
-                    double.Parse(_configuration["Token:RefreshToken:ExpiresInMinutes"]))
+                    double.Parse(_configuration["Token:RefreshToken:ExpiresInMinutes"]!))
         };
 
         return await _userSessionRepositorySql.AddAsync(userSessionSql);
@@ -113,7 +112,7 @@ public class UserSessionService : IUserSessionService
         await _userSessionRepositoryRedisOm.InsertAsync(userSessionRedisOm);
     }
 
-    private async Task<UserSessionSql> UpdateUserSessionSql(UserSessionSql userSessionSql,
+    private async Task UpdateUserSessionSql(UserSessionSql userSessionSql,
         string newAccessToken,
         string newRefreshToken)
     {
@@ -121,9 +120,9 @@ public class UserSessionService : IUserSessionService
         userSessionSql.RefreshToken = newRefreshToken;
         userSessionSql.RefreshTokenExpiresAt =
             DateTime.UtcNow.AddMinutes(
-                double.Parse(_configuration["Token:RefreshToken:ExpiresInMinutes"]));
+                double.Parse(_configuration["Token:RefreshToken:ExpiresInMinutes"]!));
 
-        return await _userSessionRepositorySql.UpdateAsync(userSessionSql);
+        await _userSessionRepositorySql.UpdateAsync(userSessionSql);
     }
 
     private async Task UpdateUserSessionRedisOm(UserSessionSql userSessionSql,
