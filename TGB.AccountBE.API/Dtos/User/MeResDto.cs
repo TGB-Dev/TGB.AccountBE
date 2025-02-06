@@ -1,6 +1,6 @@
 namespace TGB.AccountBE.API.Dtos.User;
 
-public class MeResDto
+public record MeResDto
 {
     public required string? UserName { get; set; }
     public required string? Email { get; set; }

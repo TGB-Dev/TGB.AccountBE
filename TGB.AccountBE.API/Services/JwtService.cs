@@ -27,8 +27,8 @@ public class JwtService : IJwtService
             Subject = GetClaimsIdentity(user),
             Expires = DateTime.UtcNow.AddMinutes(
                 double.Parse(_configuration["Token:AccessToken:ExpiresInMinutes"]!)),
-            Issuer = _configuration["Token:AccessToken:Issuer"],
-            Audience = _configuration["Token:AccessToken:Audience"],
+            Issuer = _configuration["Token:AccessToken:Issuer"]!,
+            Audience = _configuration["Token:AccessToken:Audience"]!,
             SigningCredentials = credentials
         };
         var tokenHandler = new JwtSecurityTokenHandler();

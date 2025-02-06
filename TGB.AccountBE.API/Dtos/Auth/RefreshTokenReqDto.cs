@@ -1,8 +1,6 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace TGB.AccountBE.API.Dtos.Auth;
 
-public class RefreshTokenReqDto
+public record RefreshTokenReqDto
 {
-    [Required] public required string RefreshToken { get; set; }
+    public required string RefreshToken { get; set; }
 }
