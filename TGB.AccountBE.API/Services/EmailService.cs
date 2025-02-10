@@ -21,13 +21,19 @@ public class EmailService : IEmailService
     {
         var body = new
         {
-            user.Email,
-            user.DisplayName,
-            user.UserName,
-            VerificationToken = verificationToken,
-            Type = EmailType.AccountVerification
+            pattern = new
+            {
+                type = EmailType.AccountVerification
+            },
+            data = new
+            {
+                email = user.Email,
+                displayName = user.DisplayName,
+                username = user.UserName,
+                verificationToken,
+            },
         };
-
+        
         await PublishMessageAsync(body);
     }
 
@@ -35,13 +41,19 @@ public class EmailService : IEmailService
     {
         var body = new
         {
-            user.Email,
-            user.DisplayName,
-            user.UserName,
-            VerificationToken = resetToken,
-            Type = EmailType.PasswordReset
+            pattern = new
+            {
+                type = EmailType.PasswordReset
+            },
+            data = new
+            {
+                email = user.Email,
+                displayName = user.DisplayName,
+                username = user.UserName,
+                resetToken
+            }
         };
-
+        
         await PublishMessageAsync(body);
     }
 
@@ -49,10 +61,16 @@ public class EmailService : IEmailService
     {
         var body = new
         {
-            user.Email,
-            user.DisplayName,
-            user.UserName,
-            Type = EmailType.PasswordChanged
+            pattern = new
+            {
+                type = EmailType.PasswordChanged
+            },
+            data = new
+            {
+                email = user.Email,
+                displayName = user.DisplayName,
+                username = user.UserName,
+            }
         };
 
         await PublishMessageAsync(body);

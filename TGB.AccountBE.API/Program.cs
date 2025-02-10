@@ -40,6 +40,7 @@ builder.Services.AddSingleton<IConnection>(_ =>
     var factory = new ConnectionFactory
     {
         HostName = builder.Configuration["RabbitMq:Host"]!,
+        Port = int.Parse(builder.Configuration["RabbitMq:Port"]!),
         UserName = builder.Configuration["RabbitMq:Username"]!,
         Password = builder.Configuration["RabbitMq:Password"]!
     };
@@ -274,7 +275,7 @@ builder.Services.AddSwaggerGen(options =>
 
 // Add a worker to handle external application registration
 // TODO: replace this in production with an administration web UI
-builder.Services.AddHostedService<ApplicationRegisterWorker>();
+builder.Services.AddHostedService<ApplicationRegisterWorkerHostedService>();
 // Configure the HTTP request pipeline.
 var app = builder.Build();
 
