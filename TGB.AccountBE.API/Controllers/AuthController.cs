@@ -99,8 +99,7 @@ public class AuthController : ControllerBase
                 userName = _authService.GenerateUserNameFromDisplayName(displayName);
                 break;
         }
-
-
+        
         if (dateOfBirthClaim != null) DateTimeOffset.Parse(dateOfBirthClaim.Value);
 
         var res = await _authService.ExternalLogin(new ExternalLoginReqDto

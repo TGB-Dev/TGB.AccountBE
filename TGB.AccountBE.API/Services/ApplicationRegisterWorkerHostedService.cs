@@ -3,11 +3,11 @@ using TGB.AccountBE.API.Database;
 
 namespace TGB.AccountBE.API;
 
-public class ApplicationRegisterWorker : IHostedService
+public class ApplicationRegisterWorkerHostedService : IHostedService
 {
     private readonly IServiceProvider _serviceProvider;
 
-    public ApplicationRegisterWorker(IServiceProvider serviceProvider)
+    public ApplicationRegisterWorkerHostedService(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
     }
