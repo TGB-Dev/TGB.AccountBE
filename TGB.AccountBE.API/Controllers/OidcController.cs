@@ -26,6 +26,7 @@ public class OidcController : ControllerBase
     [HttpGet("[action]")]
     [HttpPost("[action]")]
     [IgnoreAntiforgeryToken]
+    [Authorize]
     [UserSessionValidate]
     public async Task<IActionResult> Authorize()
     {
@@ -50,6 +51,7 @@ public class OidcController : ControllerBase
     [HttpPost("Token")]
     [IgnoreAntiforgeryToken]
     [Produces("application/json")]
+    [Authorize]
     [UserSessionValidate]
     public async Task<IActionResult> Exchange()
     {
