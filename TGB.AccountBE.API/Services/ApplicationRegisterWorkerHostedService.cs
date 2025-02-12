@@ -19,12 +19,12 @@ public class ApplicationRegisterWorkerHostedService : IHostedService
             // This test application is intended for use in Postman tests only
             new()
             {
-                ClientId = "test",
+                ClientId = "TGB.ContestPlatformBE",
                 ClientSecret = "test",
                 ClientType = OpenIddictConstants.ClientTypes.Confidential,
                 ApplicationType = OpenIddictConstants.ApplicationTypes.Web,
                 ConsentType = OpenIddictConstants.ConsentTypes.Explicit,
-                DisplayName = "Test Application",
+                DisplayName = "TGB Contest Platform Backend",
                 Permissions =
                 {
                     OpenIddictConstants.Permissions.Endpoints.Authorization,
@@ -39,7 +39,7 @@ public class ApplicationRegisterWorkerHostedService : IHostedService
 
                 RedirectUris =
                 {
-                    new Uri("https://oauth.pstmn.io/v1/callback")
+                    new Uri("https://localhost:6868/api/Login/Callback/Local")
                 },
                 Requirements =
                 {

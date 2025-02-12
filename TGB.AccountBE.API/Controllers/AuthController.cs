@@ -65,8 +65,8 @@ public class AuthController : ControllerBase
         return Ok(res);
     }
 
-    [HttpGet("Callback/{provider}")]
-    [HttpPost("Callback/{provider}")]
+    [HttpGet("Token/{provider}")]
+    [HttpPost("Token/{provider}")]
     public async Task<ActionResult<LoginResDto>> ExternalLoginCallback(string provider)
     {
         if (!AuthRules.SUPPORTED_EXTERNAL_OAUTH_PROVIDERS.Contains(provider))

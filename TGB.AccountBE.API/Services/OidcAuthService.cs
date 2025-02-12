@@ -51,8 +51,9 @@ public class OidcAuthService : IOidcAuthService
 
         // The flow:
         // Check the consent type
-        // Generate claim
-        // Sign in the user
+        // Generate claims
+        // Return the principal information back to OpenIddict client and let the frontend handles
+        // them
 
         var user = await _userManager.FindByIdAsync(userId);
 
@@ -179,8 +180,9 @@ public class OidcAuthService : IOidcAuthService
         throw new NotImplementedException();
     }
 
-    public async Task<IActionResult> UserInfo()
+    public async Task<IActionResult> UserInfo(string userId)
     {
+        var user = await _userManager.FindByIdAsync(userId);
         throw new NotImplementedException();
     }
 
