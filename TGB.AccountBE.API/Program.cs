@@ -229,11 +229,12 @@ builder.Services.AddOpenIddict()
         {
             var clientId = googleAuthConfig["ClientId"]!;
             var clientSecret = googleAuthConfig["ClientSecret"]!;
+            var redirectUri = googleAuthConfig["RedirectUri"]!;
             options.UseWebProviders().AddGoogle(authOptions =>
             {
                 authOptions.SetClientId(clientId)
                     .SetClientSecret(clientSecret)
-                    .SetRedirectUri("api/Auth/Token/Google")
+                    .SetRedirectUri(redirectUri)
                     .AddScopes(Scopes.Email, Scopes.Profile);
             });
         }
@@ -244,11 +245,12 @@ builder.Services.AddOpenIddict()
         {
             var clientId = githubAuthConfig["ClientId"]!;
             var clientSecret = githubAuthConfig["ClientSecret"]!;
+            var redirectUri = githubAuthConfig["RedirectUri"]!;
             options.UseWebProviders().AddGitHub(authOptions =>
             {
                 authOptions.SetClientId(clientId)
                     .SetClientSecret(clientSecret)
-                    .SetRedirectUri("api/Auth/Token/GitHub");
+                    .SetRedirectUri(redirectUri);
             });
         }
     })
