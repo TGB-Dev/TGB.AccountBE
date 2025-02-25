@@ -490,3 +490,18 @@ $RECYCLE.BIN/
 appsettings.json
 appsettings.*.json
 !appsettings.Example.json
+
+# Environment variable files
+*.env
+!*.env.example
+
+# Secrets
+Secrets/*
+!Secrets/.gitkeep
+
+# Docker Compose volumes
+Volumes/
+
+# DB initialization SQL scripts
+InitDB/*
+!InitDB/.gitkeep
