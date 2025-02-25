@@ -66,9 +66,12 @@ public class OidcController : ControllerBase
 
     [HttpGet("[action]")]
     [Produces("application/json")]
+    [Authorize]
+    [UserSessionValidate]
     public async Task<IActionResult> UserInfo()
     {
-        var res = await _authService.UserInfo();
+        var userId = User.GetUserId();
+        var res = await _authService.UserInfo(userId);
         return Ok(res);
     }
 }

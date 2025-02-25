@@ -1,6 +1,72 @@
 ﻿services:
-  tgb.accountbe.api:
-    image: tgb.accountbe.api
+  sso:
+    depends_on: [ postgres, redis, rabbitmq ]
+    image: tgb/accountbe
     build:
       context: .
       dockerfile: TGB.AccountBE.API/Dockerfile
+    restart: unless-stopped
+    #    ports:
+    #      - "8080:8080"
+    #      - "8081:8081"
+    hostname: tgb_accountbe_sso
+    networks: [ sso, caddy, db, rabbitmq, redis ]
+
+  caddy:
+    image: tgb/caddy
+    depends_on: [ sso ]
+    build:
+      context: .
+      dockerfile: Caddy/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "443:443"
+    hostname: tgb_accountbe_caddy
+    networks: [ caddy ]
+    volumes:
+      - ./Caddy/config/:/etc/caddy/
+      - ./Volumes/caddy_data/:/data/
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    #    ports:
+    #      - "5432:5432"
+    env_file:
+      - ./Environments/postgres.env
+    hostname: tgb_accountbe_db
+    networks: [ db ]
+    volumes:
+      - ./Volumes/db/:/var/lib/postgresql/data/
+      - ./InitDB/:/docker-entrypoint-initdb.d/
+
+  rabbitmq:
+    image: rabbitmq:3-alpine
+    restart: unless-stopped
+    #    ports:
+    #      - "5672:5672"
+    hostname: tgb_accountbe_rabbitmq
+    networks: [ rabbitmq ]
+    volumes:
+      - ./Volumes/rabbitmq/:/var/lib/rabbitmq/
+
+  redis:
+    image: redis/redis-stack-server:latest
+    restart: unless-stopped
+    hostname: tgb_accountbe_redis
+    networks: [ redis ]
+    #    ports:
+    #      - "6379:6379"
+    volumes:
+      - ./Volumes/redis/:/data/
+
+secrets:
+  sso_pfx:
+    file: ./Secrets/cert.pfx
+
+networks:
+  sso:
+  caddy:
+  db:
+  rabbitmq:
+  redis:

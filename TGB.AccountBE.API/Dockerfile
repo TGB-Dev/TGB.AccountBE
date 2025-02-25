@@ -1,6 +1,9 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER $APP_UID
 WORKDIR /app
+
+# For now, we will establish HTTPS via a reverse proxy (e.g. Caddy, NGINX, etc.), so we don't need
+# to expose the port 443
 EXPOSE 8080
 EXPOSE 8081
 
