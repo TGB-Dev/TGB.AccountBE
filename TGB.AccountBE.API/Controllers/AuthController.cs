@@ -86,6 +86,8 @@ public class AuthController : ControllerBase
         var displayName = result.Principal.FindFirst(ClaimTypes.Name)!.Value;
         var email = result.Principal.FindFirst(ClaimTypes.Email)!.Value;
 
+        string? gitHubSub = null, googleSub = null;
+
         switch (provider)
         {
             case "GitHub":
@@ -93,13 +95,15 @@ public class AuthController : ControllerBase
                 userName = result.Principal.GetClaim("login") ??
                            _authService.GenerateUserNameFromDisplayName(displayName);
                 dateOfBirthClaim = result.Principal.FindFirst(ClaimTypes.DateOfBirth);
+                gitHubSub = result.Principal.GetClaim("sub");
                 break;
             case "Google":
                 // Google doesn't provide user's date of birth
                 userName = _authService.GenerateUserNameFromDisplayName(displayName);
+                googleSub = result.Principal.GetClaim("sub");
                 break;
         }
-        
+
         if (dateOfBirthClaim != null) DateTimeOffset.Parse(dateOfBirthClaim.Value);
 
         var res = await _authService.ExternalLogin(new ExternalLoginReqDto
@@ -107,7 +111,9 @@ public class AuthController : ControllerBase
             DisplayName = displayName,
             Email = email,
             UserName = userName,
-            DateOfBirth = dateOfBirth
+            DateOfBirth = dateOfBirth,
+            GitHubSub = gitHubSub,
+            GoogleSub = googleSub,
         });
 
         return Ok(res);

@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using TGB.AccountBE.API.Constants;
 using TGB.AccountBE.API.Dtos.Auth;
 using TGB.AccountBE.API.Exceptions.ErrorExceptions;
@@ -115,10 +116,39 @@ public partial class AuthService : IAuthService
 
     public async Task<LoginResDto> ExternalLogin(ExternalLoginReqDto dto)
     {
+        // For this kind of authentication, we should check for only one provider's "sub" at a time
+        // to:
+        // 1. Determine if a user is already exist
+        // 2. To prevent credential spoofing (as recommended by Google, we should use the "sub" field
+        // to authenticate the user instead of email as it's not unique)
+
+        if ((dto.GitHubSub is not null && dto.GoogleSub is not null) ||
+            (dto.GitHubSub is null && dto.GoogleSub is null))
+        {
+            // If both "sub" is specified or both "sub" is null, it's not good at all
+            throw new BadRequestErrorException(nameof(HttpErrorResponses.OAuthBadRequest),
+                HttpErrorResponses.OAuthBadRequest);
+        }
+
         var user = await _userManager.FindByEmailAsync(dto.Email);
-        // We determine if the user is already exist using email address
+
         if (user != null)
         {
+            // Check if the user is already registered the OAuth provider
+            if (user.GoogleSub is not null && dto.GoogleSub is not null &&
+                user.GoogleSub != dto.GoogleSub)
+            {
+                throw new BadRequestErrorException(nameof(HttpErrorResponses.OAuthBadCredentials),
+                    HttpErrorResponses.OAuthBadCredentials);
+            }
+
+            if (user.GitHubSub is not null && dto.GitHubSub is not null &&
+                user.GitHubSub != dto.GitHubSub)
+            {
+                throw new BadRequestErrorException(nameof(HttpErrorResponses.OAuthBadCredentials),
+                    HttpErrorResponses.OAuthBadCredentials);
+            }
+
             // Update (but not overwrite) information from external provider
             user.DisplayName ??= dto.DisplayName;
             user.UserName ??= dto.UserName;
