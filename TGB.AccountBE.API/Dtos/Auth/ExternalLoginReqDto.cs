@@ -16,4 +16,6 @@ public record ExternalLoginReqDto
 
     [Required] [EmailAddress] public required string Email { get; set; }
     [Required] public required DateTimeOffset DateOfBirth { get; set; }
+    [Required] public required string? GitHubSub { get; set; }
+    [Required] public required string? GoogleSub { get; set; }
 }

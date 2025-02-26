@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Protocols.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RabbitMQ.Client;
@@ -167,8 +168,29 @@ builder.Services.AddOpenIddict()
             Scopes.Phone
         );
 
-        // Enable the authorization code flow.
-        options.AllowAuthorizationCodeFlow().RequireProofKeyForCodeExchange();
+        // Enable the authorization code flow with PKCE.
+        options.AllowAuthorizationCodeFlow()
+            .RequireProofKeyForCodeExchange();
+
+        // Add the X.509 encryption certificate to ensure secure communication
+        // This should be the same certificate used on the IdP
+        var certificatePath = builder.Configuration["OpenIddict:X509CertPath"];
+        if (certificatePath is null)
+        {
+            throw new InvalidConfigurationException("OpenIddict:X509CertPath is not configured.");
+        }
+
+        if (!Path.Exists(certificatePath))
+        {
+            throw new InvalidConfigurationException("OpenIddict:X509CertPath does not exist on the system.");
+        }
+
+        var certificatePassword = builder.Configuration["OpenIddict:X509CertPassword"] ??
+                                  throw new InvalidConfigurationException(
+                                      "OpenIddict:X509CertPassword is not configured.");
+        var certificateStream =
+            File.Open(certificatePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+        options.AddEncryptionCertificate(certificateStream, certificatePassword);
 
         // Register the signing and encryption credentials.
         options.AddDevelopmentEncryptionCertificate()
@@ -184,7 +206,7 @@ builder.Services.AddOpenIddict()
     })
     .AddClient(options =>
     {
-        options.SetRedirectionEndpointUris("api/Auth/Callback");
+        options.SetRedirectionEndpointUris("api/Auth/Token");
         options.AllowAuthorizationCodeFlow();
 
         options.AddDevelopmentEncryptionCertificate()
@@ -207,11 +229,12 @@ builder.Services.AddOpenIddict()
         {
             var clientId = googleAuthConfig["ClientId"]!;
             var clientSecret = googleAuthConfig["ClientSecret"]!;
+            var redirectUri = googleAuthConfig["RedirectUri"]!;
             options.UseWebProviders().AddGoogle(authOptions =>
             {
                 authOptions.SetClientId(clientId)
                     .SetClientSecret(clientSecret)
-                    .SetRedirectUri("api/Auth/Callback/Google")
+                    .SetRedirectUri(redirectUri)
                     .AddScopes(Scopes.Email, Scopes.Profile);
             });
         }
@@ -222,11 +245,12 @@ builder.Services.AddOpenIddict()
         {
             var clientId = githubAuthConfig["ClientId"]!;
             var clientSecret = githubAuthConfig["ClientSecret"]!;
+            var redirectUri = githubAuthConfig["RedirectUri"]!;
             options.UseWebProviders().AddGitHub(authOptions =>
             {
                 authOptions.SetClientId(clientId)
                     .SetClientSecret(clientSecret)
-                    .SetRedirectUri("api/Auth/Callback/GitHub");
+                    .SetRedirectUri(redirectUri);
             });
         }
     })

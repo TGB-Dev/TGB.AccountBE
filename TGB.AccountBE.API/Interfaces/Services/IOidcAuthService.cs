@@ -9,7 +9,7 @@ public interface IOidcAuthService
     Task<ClaimsPrincipal> Authorize(OpenIddictRequest request, string userId);
     Task<IActionResult> Logout();
     Task<ClaimsPrincipal> Exchange(OpenIddictRequest request, string userId, ClaimsPrincipal principal);
-    Task<IActionResult> UserInfo();
+    Task<IActionResult> UserInfo(string userId);
 
     // These are for accepting and denying applications to be authorized
     Task<IActionResult> Accept();

@@ -26,6 +26,8 @@ public static class HttpErrorResponses
     // OIDC/OAuth errors
     public const string OAuthProviderNotSupported = "OAuth provider is not supported";
     public const string OAuthRegistrationError = "Error while registering user via OAuth provider";
+    public const string OAuthBadRequest = "Bad OAuth request";
+    public const string OAuthBadCredentials = "Bad OAuth credentials";
     public const string InvalidOAuthRegisteredUser = "Invalid registered user from OAuth provider";
     public const string OAuthClientIdNotProvided = "OAuth client ID not provided";
     public const string OidcInvalidConsentType = "OIDC consent type is invalid";
