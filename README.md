@@ -27,7 +27,7 @@ docker compose up -d
 ## Migrations
 
 ```shell
-dotnet ef migrations script --idempotent -o ./InitDB/init.sql
+dotnet ef migrations script --idempotent --project TGB.AccountBE.API -o ./InitDB/init.sql
 ```
 
 ## Documentations

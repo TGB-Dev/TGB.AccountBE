@@ -182,7 +182,7 @@ builder.Services.AddOpenIddict()
 
         if (!Path.Exists(certificatePath))
         {
-            throw new InvalidConfigurationException("OpenIddict:X509CertPath does not exist.");
+            throw new InvalidConfigurationException("OpenIddict:X509CertPath does not exist on the system.");
         }
 
         var certificatePassword = builder.Configuration["OpenIddict:X509CertPassword"] ??
